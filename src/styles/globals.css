@@ -1,0 +1,196 @@
+@import 'tailwindcss';
+
+/* Tajawal Arabic Font */
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/tajawal/v9/Iurf6YBj_oCad4k1l8KiHqRpiYlJ.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE80-FEFC;
+}
+
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/tajawal/v9/Iura6YBj_oCad4k1nzSBC45IOLfB.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE80-FEFC;
+}
+
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/tajawal/v9/Iura6YBj_oCad4k1nzSBC45IOLfB.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE80-FEFC;
+}
+
+/* CSS Custom Properties for theme */
+@theme {
+  /* Brand Colors */
+  --color-brand-primary: #6B4EAA;
+  --color-brand-primary-light: #8B6FC8;
+  --color-brand-primary-dark: #4A3580;
+  --color-brand-secondary: #F5A623;
+  --color-brand-secondary-light: #FFD270;
+  --color-brand-secondary-dark: #C88500;
+
+  /* Background Colors */
+  --color-bg-main: #F5F2ED;
+  --color-bg-card: #FFFFFF;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-muted: #F0EDE8;
+
+  /* Text Colors */
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #6B6B6B;
+  --color-text-muted: #9B9B9B;
+  --color-text-inverse: #FFFFFF;
+
+  /* Border Colors */
+  --color-border-default: #E5E2DD;
+  --color-border-subtle: #F0EDE8;
+  --color-border-strong: #D1CEC9;
+
+  /* Status Colors */
+  --color-success: #22C55E;
+  --color-success-light: #DCFCE7;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FEF3C7;
+  --color-error: #EF4444;
+  --color-error-light: #FEE2E2;
+  --color-info: #3B82F6;
+  --color-info-light: #DBEAFE;
+
+  /* Font Family */
+  --font-arabic: 'Tajawal', 'Noto Sans Arabic', system-ui, sans-serif;
+  --font-english: 'Inter', system-ui, sans-serif;
+
+  /* Shadows */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+}
+
+/* Base Styles */
+@layer base {
+  html {
+    font-family: var(--font-arabic);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-bg-main text-text-primary;
+    min-height: 100dvh;
+  }
+
+  /* RTL Support */
+  [dir='rtl'] {
+    font-family: var(--font-arabic);
+  }
+
+  [dir='ltr'] {
+    font-family: var(--font-english);
+  }
+
+  /* Focus styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-brand-primary ring-offset-2;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-brand-primary text-white;
+  }
+}
+
+/* Component Layer */
+@layer components {
+  /* Card base */
+  .card {
+    @apply bg-bg-card rounded-xl shadow-card;
+  }
+
+  .card-elevated {
+    @apply bg-bg-elevated rounded-xl shadow-elevated;
+  }
+
+  /* Button base classes */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200;
+    @apply focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    min-height: 2.75rem; /* 44px touch target */
+    min-width: 2.75rem;
+  }
+
+  /* Skeleton shimmer */
+  .skeleton {
+    @apply relative overflow-hidden bg-border-default rounded;
+  }
+
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+}
+
+/* Utility Layer */
+@layer utilities {
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Safe area padding for mobile */
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Text balance for Arabic */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Prevent text selection */
+  .select-none {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
