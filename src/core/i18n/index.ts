@@ -32,6 +32,10 @@ i18n
     },
     fallbackLng: DEFAULT_LANGUAGE,
     supportedLngs: Object.keys(LANGUAGES),
+    ns: ['translation'],
+    defaultNS: 'translation',
+    keySeparator: '.',
+    nsSeparator: ':',
     interpolation: {
       escapeValue: false, // React already escapes
     },
