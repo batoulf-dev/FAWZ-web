@@ -21,7 +21,7 @@ import type { PayoutStatus, PrizePayout } from '../types/prizes.types';
 
 // Summary card component
 function PrizeSummaryCard({ totalWins, totalAmount }: { totalWins: number; totalAmount: number }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   return (
     <Card className="bg-gradient-to-r from-brand-gold/10 to-brand-primary/10">
@@ -63,7 +63,7 @@ function PrizeRow({
   payoutStatus: PayoutStatus;
   onTap: () => void;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   const statusConfig: Record<
     PayoutStatus,
@@ -188,7 +188,7 @@ function PrizeHistorySkeleton() {
 }
 
 export default function PrizeHistoryPage(): React.ReactElement {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isOnline = useNetworkStatus();
 

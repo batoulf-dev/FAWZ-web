@@ -22,6 +22,7 @@ interface AuthState {
   updateUser: (user: Partial<User>) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
+  mockLogin: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -71,6 +72,28 @@ export const useAuthStore = create<AuthState>()(
       // Set loading state
       setLoading: (loading) => {
         set({ isLoading: loading });
+      },
+
+      // Mock login for development testing only
+      mockLogin: () => {
+        const mockToken = 'mock-token-for-dev';
+        const mockUser: User = {
+          id: '550e8400-e29b-41d4-a716-446655440000',
+          phone: '+9647700000000',
+          name: 'Batoul Test',
+          email: 'normaluser.20260506@fawz.com',
+          is_verified: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setTokens(mockToken, undefined);
+        set({
+          user: mockUser,
+          accessToken: mockToken,
+          refreshToken: null,
+          isAuthenticated: true,
+          isLoading: false,
+        });
       },
     }),
     {

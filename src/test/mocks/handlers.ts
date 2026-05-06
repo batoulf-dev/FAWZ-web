@@ -25,6 +25,8 @@ import {
   mockPrizePayoutList,
   mockPrizeSummary,
   mockConsentList,
+  mockConsumerUser,
+  mockConsumerUserList,
 } from '../fixtures';
 
 const API_BASE = 'https://dev.iqarx.com/api/v0';
@@ -34,8 +36,8 @@ const API_BASE = 'https://dev.iqarx.com/api/v0';
 // ===========================================
 
 const userManagementHandlers = [
-  // Login
-  http.patch(`${API_BASE}/fawz_user_management/user/login_user`, async () => {
+  // Login - POST method (matches auth.service.ts)
+  http.post(`${API_BASE}/fawz_user_management/user/login_user`, async () => {
     await delay(100);
     return HttpResponse.json({
       message: 'User Logged In Successfully',
@@ -86,6 +88,22 @@ const userManagementHandlers = [
     });
   }),
 
+  // Change password by user
+  http.patch(`${API_BASE}/fawz_user_management/user/change_password_by_user`, async () => {
+    await delay(100);
+    return HttpResponse.json({
+      message: 'Password Changed Successfully',
+      encrypted_token: mockAuthTokens.access_token,
+      access_token: mockAuthTokens.access_token,
+    });
+  }),
+
+  // Change password via JWT
+  http.patch(`${API_BASE}/fawz_user_management/user/change_password`, async () => {
+    await delay(100);
+    return HttpResponse.json({ message: 'Password Changed Successfully' });
+  }),
+
   // Get current user
   http.get(`${API_BASE}/fawz_user_management/user/me`, async () => {
     await delay(100);
@@ -97,6 +115,12 @@ const userManagementHandlers = [
     await delay(100);
     return HttpResponse.json({ message: 'Profile Updated Successfully' });
   }),
+
+  // Upload profile image
+  http.post(`${API_BASE}/fawz_user_management/user/upload_profile_image`, async () => {
+    await delay(100);
+    return HttpResponse.json({ message: 'Profile Image Uploaded Successfully' });
+  }),
 ];
 
 // ===========================================
@@ -104,28 +128,61 @@ const userManagementHandlers = [
 // ===========================================
 
 const drawManagementHandlers = [
-  // List draws
-  http.get(`${API_BASE}/fawz_draw_management/draw`, async () => {
+  // List draws (plural - matches draw.service.ts)
+  http.get(`${API_BASE}/fawz_draw_management/draws`, async () => {
     await delay(100);
     return HttpResponse.json(mockDrawList);
   }),
 
-  // Get draw by ID
-  http.get(`${API_BASE}/fawz_draw_management/draw/:draw_id`, async () => {
+  // Get draw by ID (plural)
+  http.get(`${API_BASE}/fawz_draw_management/draws/:draw_id`, async () => {
     await delay(100);
     return HttpResponse.json(mockDraw);
   }),
 
-  // Get draw winners
-  http.get(`${API_BASE}/fawz_draw_management/draw_winner`, async () => {
+  // Get draw winners (plural - matches draw.service.ts)
+  http.get(`${API_BASE}/fawz_draw_management/draw_winners`, async () => {
     await delay(100);
     return HttpResponse.json(mockDrawWinners);
   }),
 
-  // Get user's winning history
-  http.get(`${API_BASE}/fawz_draw_management/draw_winner/user/:user_id`, async () => {
+  // Get draw winner by ID
+  http.get(`${API_BASE}/fawz_draw_management/draw_winners/:winner_id`, async () => {
     await delay(100);
-    return HttpResponse.json(mockDrawWinners);
+    return HttpResponse.json(mockDrawWinners.draw_winners_list[0]);
+  }),
+
+  // Get draw digit events
+  http.get(`${API_BASE}/fawz_draw_management/draw_digit_events`, async () => {
+    await delay(100);
+    return HttpResponse.json({
+      draw_digit_events_list: [
+        {
+          draw_digit_event_id: '1',
+          draw_id: mockDraw.draw_id,
+          digit_position: 1,
+          digit_value: 1,
+          revealed_at: '2024-03-21T20:05:00Z',
+        },
+        {
+          draw_digit_event_id: '2',
+          draw_id: mockDraw.draw_id,
+          digit_position: 2,
+          digit_value: 2,
+          revealed_at: '2024-03-21T20:06:00Z',
+        },
+        {
+          draw_digit_event_id: '3',
+          draw_id: mockDraw.draw_id,
+          digit_position: 3,
+          digit_value: 3,
+          revealed_at: '2024-03-21T20:07:00Z',
+        },
+      ],
+      total_draw_digit_events: 3,
+      page: 1,
+      page_size: 20,
+    });
   }),
 ];
 
@@ -134,20 +191,20 @@ const drawManagementHandlers = [
 // ===========================================
 
 const entryGenerationHandlers = [
-  // List entries
-  http.get(`${API_BASE}/fawz_entry_generation/fawz_entry`, async () => {
+  // List entries (plural - matches entries.service.ts)
+  http.get(`${API_BASE}/fawz_entry_generation/fawz_entries`, async () => {
     await delay(100);
     return HttpResponse.json(mockEntryList);
   }),
 
   // Get entry summary
-  http.get(`${API_BASE}/fawz_entry_generation/fawz_entry/summary`, async () => {
+  http.get(`${API_BASE}/fawz_entry_generation/fawz_entries/summary`, async () => {
     await delay(100);
     return HttpResponse.json(mockEntrySummary);
   }),
 
-  // Get entry by ID
-  http.get(`${API_BASE}/fawz_entry_generation/fawz_entry/:entry_id`, async () => {
+  // Get entry by ID (plural)
+  http.get(`${API_BASE}/fawz_entry_generation/fawz_entries/:entry_id`, async () => {
     await delay(100);
     return HttpResponse.json(mockEntryList.fawz_entries_list[0]);
   }),
@@ -158,52 +215,92 @@ const entryGenerationHandlers = [
 // ===========================================
 
 const consumerEngagementHandlers = [
-  // List notifications
-  http.get(`${API_BASE}/fawz_consumer_engagement/notification`, async () => {
+  // List notifications (plural - matches notifications.service.ts)
+  http.get(`${API_BASE}/fawz_consumer_engagement/notifications`, async () => {
     await delay(100);
     return HttpResponse.json(mockNotificationList);
   }),
 
+  // Get notification by ID
+  http.get(`${API_BASE}/fawz_consumer_engagement/notifications/:id`, async () => {
+    await delay(100);
+    return HttpResponse.json(mockNotificationList.notifications_list[0]);
+  }),
+
   // Get unread count
-  http.get(`${API_BASE}/fawz_consumer_engagement/notification/unread_count`, async () => {
+  http.get(`${API_BASE}/fawz_consumer_engagement/notifications/unread_count`, async () => {
     await delay(100);
     return HttpResponse.json(mockUnreadCount);
   }),
 
   // Mark notification as read
-  http.patch(`${API_BASE}/fawz_consumer_engagement/notification/:id`, async () => {
+  http.patch(`${API_BASE}/fawz_consumer_engagement/notifications/:id`, async () => {
     await delay(100);
     return HttpResponse.json({ message: 'Notification Updated Successfully' });
   }),
 
   // Mark all as read
-  http.patch(`${API_BASE}/fawz_consumer_engagement/notification/mark_all_read`, async () => {
+  http.patch(`${API_BASE}/fawz_consumer_engagement/notifications/mark_all_read`, async () => {
     await delay(100);
     return HttpResponse.json({ message: 'All Notifications Marked as Read' });
   }),
 
-  // Get notification preferences
-  http.get(`${API_BASE}/fawz_consumer_engagement/notification_preference`, async () => {
+  // Get notification preferences (plural - matches notifications.service.ts)
+  http.get(`${API_BASE}/fawz_consumer_engagement/notification_preferences`, async () => {
     await delay(100);
     return HttpResponse.json(mockNotificationPreferences);
   }),
 
   // Update notification preference
-  http.patch(`${API_BASE}/fawz_consumer_engagement/notification_preference/:id`, async () => {
+  http.patch(`${API_BASE}/fawz_consumer_engagement/notification_preferences/:id`, async () => {
     await delay(100);
     return HttpResponse.json({ message: 'Preference Updated Successfully' });
   }),
 
-  // Get user consents
-  http.get(`${API_BASE}/fawz_consumer_engagement/consent`, async () => {
+  // Get user consents (matches consent.service.ts)
+  http.get(`${API_BASE}/fawz_consumer_engagement/user_consents`, async () => {
     await delay(100);
     return HttpResponse.json(mockConsentList);
   }),
 
-  // Update consent
-  http.patch(`${API_BASE}/fawz_consumer_engagement/consent/:id`, async () => {
+  // Get user consent by ID
+  http.get(`${API_BASE}/fawz_consumer_engagement/user_consents/:id`, async () => {
+    await delay(100);
+    return HttpResponse.json(mockConsentList.user_consents_list?.[0] ?? {});
+  }),
+
+  // Create user consent
+  http.post(`${API_BASE}/fawz_consumer_engagement/user_consents`, async () => {
+    await delay(100);
+    return HttpResponse.json(
+      { user_consent_id: 'consent-mock-id', message: 'Consent Created Successfully' },
+      { status: 201 },
+    );
+  }),
+
+  // Update user consent
+  http.patch(`${API_BASE}/fawz_consumer_engagement/user_consents/:id`, async () => {
     await delay(100);
     return HttpResponse.json({ message: 'Consent Updated Successfully' });
+  }),
+
+  // Consumer Users (Profile)
+  // List consumer users (current user's profile)
+  http.get(`${API_BASE}/fawz_consumer_engagement/consumer_users`, async () => {
+    await delay(100);
+    return HttpResponse.json(mockConsumerUserList);
+  }),
+
+  // Get consumer user by ID
+  http.get(`${API_BASE}/fawz_consumer_engagement/consumer_users/:id`, async () => {
+    await delay(100);
+    return HttpResponse.json(mockConsumerUser);
+  }),
+
+  // Update consumer user
+  http.patch(`${API_BASE}/fawz_consumer_engagement/consumer_users/:id`, async () => {
+    await delay(100);
+    return HttpResponse.json({ message: 'Profile Updated Successfully' });
   }),
 ];
 
@@ -212,32 +309,38 @@ const consumerEngagementHandlers = [
 // ===========================================
 
 const challengeSystemHandlers = [
-  // List challenges
-  http.get(`${API_BASE}/fawz_challenge_system/challenge`, async () => {
+  // List challenges (plural - matches challenges.service.ts)
+  http.get(`${API_BASE}/fawz_challenge_system/challenges`, async () => {
     await delay(100);
     return HttpResponse.json(mockChallengeList);
   }),
 
-  // Get challenge by ID
-  http.get(`${API_BASE}/fawz_challenge_system/challenge/:challenge_id`, async () => {
+  // Get challenge by ID (plural)
+  http.get(`${API_BASE}/fawz_challenge_system/challenges/:challenge_id`, async () => {
     await delay(100);
     return HttpResponse.json(mockChallengeList.challenges_list[0]);
   }),
 
-  // Get user progress
-  http.get(`${API_BASE}/fawz_challenge_system/user_challenge_progress`, async () => {
+  // Get user progress (plural - matches challenges.service.ts)
+  http.get(`${API_BASE}/fawz_challenge_system/user_challenge_progresses`, async () => {
     await delay(100);
     return HttpResponse.json(mockUserProgressList);
   }),
 
-  // List badges
-  http.get(`${API_BASE}/fawz_challenge_system/badge`, async () => {
+  // Update user challenge progress (for claim checkpoint)
+  http.patch(`${API_BASE}/fawz_challenge_system/user_challenge_progresses/:progress_id`, async () => {
+    await delay(100);
+    return HttpResponse.json(mockUserProgressList.user_challenge_progresses_list[0]);
+  }),
+
+  // List badges (plural - matches challenges.service.ts)
+  http.get(`${API_BASE}/fawz_challenge_system/badges`, async () => {
     await delay(100);
     return HttpResponse.json(mockBadgeList);
   }),
 
-  // Get user badges
-  http.get(`${API_BASE}/fawz_challenge_system/user_badge`, async () => {
+  // Get user badges (plural - matches challenges.service.ts)
+  http.get(`${API_BASE}/fawz_challenge_system/user_badges`, async () => {
     await delay(100);
     return HttpResponse.json({ user_badges_list: [], total_user_badges: 0, page: 1, page_size: 20 });
   }),
@@ -248,26 +351,43 @@ const challengeSystemHandlers = [
 // ===========================================
 
 const referralSystemHandlers = [
-  // List referrals
-  http.get(`${API_BASE}/fawz_referral_system/referral`, async () => {
+  // List referrals (plural - matches referrals.service.ts)
+  http.get(`${API_BASE}/fawz_referral_system/referrals`, async () => {
     await delay(100);
     return HttpResponse.json(mockReferralList);
   }),
 
+  // Get referral by ID
+  http.get(`${API_BASE}/fawz_referral_system/referrals/:referral_id`, async () => {
+    await delay(100);
+    return HttpResponse.json(mockReferralList.referrals_list[0]);
+  }),
+
   // Get referral stats
-  http.get(`${API_BASE}/fawz_referral_system/referral/stats`, async () => {
+  http.get(`${API_BASE}/fawz_referral_system/referrals/stats`, async () => {
     await delay(100);
     return HttpResponse.json(mockReferralStats);
   }),
 
-  // Get referral link
-  http.get(`${API_BASE}/fawz_referral_system/referral_link`, async () => {
+  // Get referral links (plural - matches referrals.service.ts)
+  http.get(`${API_BASE}/fawz_referral_system/referral_links`, async () => {
     await delay(100);
-    return HttpResponse.json({ referral_links_list: [mockReferralLink], total_referral_links: 1, page: 1, page_size: 20 });
+    return HttpResponse.json({
+      referral_links_list: [mockReferralLink],
+      total_referral_links: 1,
+      page: 1,
+      page_size: 20,
+    });
+  }),
+
+  // Get referral link by ID
+  http.get(`${API_BASE}/fawz_referral_system/referral_links/:link_id`, async () => {
+    await delay(100);
+    return HttpResponse.json(mockReferralLink);
   }),
 
   // Create referral link
-  http.post(`${API_BASE}/fawz_referral_system/referral_link`, async () => {
+  http.post(`${API_BASE}/fawz_referral_system/referral_links`, async () => {
     await delay(100);
     return HttpResponse.json(
       { referral_link_id: mockReferralLink.referral_link_id, message: 'Referral Link Created Successfully' },
@@ -281,20 +401,20 @@ const referralSystemHandlers = [
 // ===========================================
 
 const fraudComplianceHandlers = [
-  // List disputes
-  http.get(`${API_BASE}/fawz_fraud_compliance/dispute`, async () => {
+  // List disputes (plural - for disputes.service.ts)
+  http.get(`${API_BASE}/fawz_fraud_compliance/disputes`, async () => {
     await delay(100);
     return HttpResponse.json(mockDisputeList);
   }),
 
   // Get dispute by ID
-  http.get(`${API_BASE}/fawz_fraud_compliance/dispute/:dispute_id`, async () => {
+  http.get(`${API_BASE}/fawz_fraud_compliance/disputes/:dispute_id`, async () => {
     await delay(100);
     return HttpResponse.json(mockDisputeList.disputes_list[0]);
   }),
 
   // Create dispute
-  http.post(`${API_BASE}/fawz_fraud_compliance/dispute`, async () => {
+  http.post(`${API_BASE}/fawz_fraud_compliance/disputes`, async () => {
     await delay(100);
     return HttpResponse.json(
       { dispute_id: mockDisputeList.disputes_list[0].dispute_id, message: 'Dispute Created Successfully' },
@@ -308,14 +428,20 @@ const fraudComplianceHandlers = [
 // ===========================================
 
 const prizePayoutHandlers = [
-  // List prize payouts
-  http.get(`${API_BASE}/fawz_prize_payout_management/prize_payout`, async () => {
+  // List prize payouts (plural - for prizes.service.ts)
+  http.get(`${API_BASE}/fawz_prize_payout_management/prize_payouts`, async () => {
     await delay(100);
     return HttpResponse.json(mockPrizePayoutList);
   }),
 
+  // Get prize payout by ID
+  http.get(`${API_BASE}/fawz_prize_payout_management/prize_payouts/:payout_id`, async () => {
+    await delay(100);
+    return HttpResponse.json(mockPrizePayoutList.prize_payouts_list[0]);
+  }),
+
   // Get prize summary
-  http.get(`${API_BASE}/fawz_prize_payout_management/prize_payout/summary`, async () => {
+  http.get(`${API_BASE}/fawz_prize_payout_management/prize_payouts/summary`, async () => {
     await delay(100);
     return HttpResponse.json(mockPrizeSummary);
   }),

@@ -35,7 +35,7 @@ const resetPasswordFormSchema = z
 type ResetPasswordFormData = z.infer<typeof resetPasswordFormSchema>;
 
 export default function ResetPasswordPage(): React.ReactElement {
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);

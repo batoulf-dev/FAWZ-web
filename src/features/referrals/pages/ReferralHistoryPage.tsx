@@ -32,7 +32,7 @@ function ReferralRow({
   rewardEntries: number;
   rewardCash: number;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   const statusConfig: Record<
     ReferralStatus,
@@ -163,7 +163,7 @@ function HistorySkeleton() {
 }
 
 export default function ReferralHistoryPage(): React.ReactElement {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isOnline = useNetworkStatus();
 

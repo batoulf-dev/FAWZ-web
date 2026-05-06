@@ -18,7 +18,7 @@ import { isApiError } from '@/core/network/types/apiError';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage(): React.ReactElement {
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);

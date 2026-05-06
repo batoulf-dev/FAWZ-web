@@ -27,12 +27,12 @@ i18n
   .use(initReactI18next)
   .init({
     resources: {
-      ar: { translation: ar, consumer: ar, auth: ar },
-      en: { translation: en, consumer: en, auth: en },
+      ar: { translation: ar },
+      en: { translation: en },
     },
     fallbackLng: DEFAULT_LANGUAGE,
     supportedLngs: Object.keys(LANGUAGES),
-    ns: ['translation', 'consumer', 'auth'],
+    ns: ['translation'],
     defaultNS: 'translation',
     keySeparator: '.',
     nsSeparator: ':',

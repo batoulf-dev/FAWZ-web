@@ -16,13 +16,15 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useLogin } from '../services/auth.service';
 import { loginRequestSchema, type LoginFormData } from '../types/auth.types';
 import { isApiError } from '@/core/network/types/apiError';
+import { env } from '@/config/env';
 import toast from 'react-hot-toast';
 
 export default function LoginPage(): React.ReactElement {
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const mockLogin = useAuthStore((state) => state.mockLogin);
   const [showPassword, setShowPassword] = useState(false);
 
   const from = (location.state as { from?: string })?.from ?? '/';
@@ -136,6 +138,23 @@ export default function LoginPage(): React.ReactElement {
           {t('loginButton')}
         </Button>
       </form>
+
+      {env.isDev && (
+        <div className="mt-4 pt-4 border-t border-border-default">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            fullWidth
+            onClick={() => {
+              mockLogin();
+              navigate(from, { replace: true });
+            }}
+          >
+            Dev Login (Bypass Auth)
+          </Button>
+        </div>
+      )}
 
       <div className="mt-6 text-center">
         <p className="text-text-secondary">

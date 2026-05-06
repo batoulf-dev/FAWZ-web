@@ -121,7 +121,7 @@ function ChallengeDetailSkeleton() {
 }
 
 export default function ChallengeDetailPage(): React.ReactElement {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { challengeId } = useParams<{ challengeId: string }>();
   const isOnline = useNetworkStatus();

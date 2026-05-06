@@ -595,13 +595,61 @@ export const mockConsent: Consent = {
 };
 
 export const mockConsentList = {
-  consents_list: [
-    mockConsent,
-    { ...mockConsent, consent_id: 'kk0e8400-e29b-41d4-a716-446655440002', consent_type: 'media_consent' as const, is_accepted: false, accepted_at: undefined },
-    { ...mockConsent, consent_id: 'kk0e8400-e29b-41d4-a716-446655440003', consent_type: 'terms_of_service' as const },
-    { ...mockConsent, consent_id: 'kk0e8400-e29b-41d4-a716-446655440004', consent_type: 'privacy_policy' as const },
+  user_consents_list: [
+    {
+      user_consent_id: 'kk0e8400-e29b-41d4-a716-446655440001',
+      consumer_user_id: mockUser.id,
+      consent_type: 'sharia_disclosure',
+      consent_version: '1.0',
+      consented: true,
+      consented_at: '2024-01-15T10:35:00Z',
+      created_at: '2024-01-15T10:30:00Z',
+      updated_at: '2024-01-15T10:35:00Z',
+    },
+    {
+      user_consent_id: 'kk0e8400-e29b-41d4-a716-446655440002',
+      consumer_user_id: mockUser.id,
+      consent_type: 'media_participation',
+      consent_version: '1.0',
+      consented: false,
+      consented_at: undefined,
+      created_at: '2024-01-15T10:30:00Z',
+      updated_at: '2024-01-15T10:30:00Z',
+    },
   ],
-  total_consents: 4,
+  total_user_consents: 2,
+  page: 1,
+  page_size: 20,
+};
+
+// ===========================================
+// Consumer User Fixtures (Profile)
+// ===========================================
+
+export const mockConsumerUser = {
+  consumer_user_id: mockUser.id,
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  user_id: mockUser.id,
+  display_name: 'أحمد محمد',
+  phone: mockUser.phone,
+  email: mockUser.email,
+  city: 'بغداد',
+  governorate: 'بغداد',
+  is_ambassador: false,
+  is_new: false,
+  total_entries_earned: 45,
+  total_prizes_won_iqd: 750000,
+  referral_count_month: 3,
+  sharia_consent_accepted: true,
+  sharia_consent_accepted_at: '2024-01-15T10:35:00Z',
+  media_consent_decision: null,
+  created_at: '2024-01-15T10:30:00Z',
+  updated_at: '2024-03-20T14:45:00Z',
+};
+
+export const mockConsumerUserList = {
+  consumer_users_list: [mockConsumerUser],
+  total_consumer_users: 1,
   page: 1,
   page_size: 20,
 };

@@ -42,7 +42,7 @@ function DrawRow({
   userPrize,
   onTap,
 }: DrawRowProps) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   const formattedDate = new Date(drawDate).toLocaleDateString('ar-IQ', {
     weekday: 'long',
@@ -114,7 +114,7 @@ function FilterTabs({
   activeFilter: FilterType;
   onFilterChange: (filter: FilterType) => void;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const filters: { value: FilterType; label: string }[] = [
     { value: 'all', label: t('filter.all') },
     { value: 'weekly', label: t('draw.weekly') },
@@ -166,7 +166,7 @@ function DrawListSkeleton() {
 }
 
 export default function DrawListPage(): React.ReactElement {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isOnline = useNetworkStatus();
   const [filter, setFilter] = useState<FilterType>('all');

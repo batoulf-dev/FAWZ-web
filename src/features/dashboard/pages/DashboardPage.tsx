@@ -57,7 +57,7 @@ function ChallengeCard({
   daysRemaining: number;
   challengeId: string;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const progressPercent = Math.min((progress / target) * 100, 100);
 
@@ -96,7 +96,7 @@ function DrawCountdown({ drawDate, jackpot, drawType }: {
   jackpot: number;
   drawType: string;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState('');
 
@@ -140,7 +140,7 @@ function DrawCountdown({ drawDate, jackpot, drawType }: {
 
 // Entry Count Hero Component
 function EntryCountHero({ count, onTap }: { count: number; onTap: () => void }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   return (
     <Card
@@ -180,7 +180,7 @@ function DashboardSkeleton() {
 }
 
 export default function DashboardPage(): React.ReactElement {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isOnline = useNetworkStatus();
 

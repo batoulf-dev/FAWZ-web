@@ -29,7 +29,48 @@
     "seeLess": "عرض أقل",
     "details": "التفاصيل",
     "viewAll": "عرض الكل",
-    "loadMore": "تحميل المزيد"
+    "loadMore": "تحميل المزيد",
+    "enums": {
+      "status": {
+        "active": "نشط",
+        "inactive": "غير نشط",
+        "dormant": "خامل",
+        "configured": "تم الإعداد",
+        "updated": "محدّث",
+        "flagged": "مُبلّغ عنه",
+        "under_review": "قيد المراجعة",
+        "approved": "موافق عليه",
+        "rejected": "مرفوض",
+        "escalated": "تم التصعيد",
+        "closed": "مغلق",
+        "archived": "مؤرشف"
+      },
+      "channel": {
+        "bill_pay": "دفع الفواتير",
+        "online": "أونلاين",
+        "pos": "نقطة البيع",
+        "qr": "رمز QR",
+        "top_up": "شحن الرصيد",
+        "other": "أخرى"
+      },
+      "source": {
+        "transaction": "معاملة",
+        "bonus": "مكافأة",
+        "challenge": "تحدي",
+        "community_challenge": "تحدي مجتمعي",
+        "onboarding": "تسجيل جديد",
+        "referral": "إحالة",
+        "retroactive": "بأثر رجعي"
+      },
+      "owner_type": {
+        "user": "مستخدم",
+        "merchant": "تاجر"
+      },
+      "type": {
+        "weekly": "أسبوعي",
+        "monthly": "شهري"
+      }
+    }
   },
   "auth": {
     "login": "تسجيل الدخول",

@@ -21,7 +21,7 @@ import toast from 'react-hot-toast';
 const RESEND_COOLDOWN = 60; // seconds
 
 export default function VerifyEmailPage(): React.ReactElement {
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);

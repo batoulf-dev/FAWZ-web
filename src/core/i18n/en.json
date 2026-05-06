@@ -29,7 +29,48 @@
     "seeLess": "See Less",
     "details": "Details",
     "viewAll": "View All",
-    "loadMore": "Load More"
+    "loadMore": "Load More",
+    "enums": {
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "dormant": "Dormant",
+        "configured": "Configured",
+        "updated": "Updated",
+        "flagged": "Flagged",
+        "under_review": "Under Review",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "escalated": "Escalated",
+        "closed": "Closed",
+        "archived": "Archived"
+      },
+      "channel": {
+        "bill_pay": "Bill Pay",
+        "online": "Online",
+        "pos": "Point of Sale",
+        "qr": "QR",
+        "top_up": "Top Up",
+        "other": "Other"
+      },
+      "source": {
+        "transaction": "Transaction",
+        "bonus": "Bonus",
+        "challenge": "Challenge",
+        "community_challenge": "Community Challenge",
+        "onboarding": "Onboarding",
+        "referral": "Referral",
+        "retroactive": "Retroactive"
+      },
+      "owner_type": {
+        "user": "User",
+        "merchant": "Merchant"
+      },
+      "type": {
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      }
+    }
   },
   "auth": {
     "login": "Login",

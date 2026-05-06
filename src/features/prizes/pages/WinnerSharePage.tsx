@@ -28,7 +28,7 @@ function WinnerShareCard({
   drawDate: string;
   matchingDigits: number;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const digits = entryNumber.split('');
 
   return (
@@ -94,7 +94,7 @@ function WinnerShareCard({
 }
 
 export default function WinnerSharePage(): React.ReactElement {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const isOnline = useNetworkStatus();

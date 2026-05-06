@@ -67,7 +67,7 @@ function TierSummary({
   count: number;
   prizePerWinner: number;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   const tierLabels: Record<string, string> = {
     'last_3': t('draw.tierLast3'),
@@ -105,7 +105,7 @@ function UserMatchesSection({
   }>;
   onShare: () => void;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   if (matches.length === 0) {
     return (
@@ -180,7 +180,7 @@ function DrawDetailSkeleton() {
 }
 
 export default function DrawDetailPage(): React.ReactElement {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { drawId } = useParams<{ drawId: string }>();
   const isOnline = useNetworkStatus();

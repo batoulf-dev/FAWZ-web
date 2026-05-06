@@ -28,7 +28,7 @@ function ChallengeCard({
   challenge: ChallengeWithProgress;
   onTap: () => void;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   const progress = challenge.userProgress?.current_value ?? 0;
   const target = challenge.target_value;
@@ -121,7 +121,7 @@ function OnboardingProgressCard({
   total: number;
   onTap: () => void;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   return (
     <Card
@@ -176,7 +176,7 @@ function ChallengesSkeleton() {
 }
 
 export default function ChallengesPage(): React.ReactElement {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isOnline = useNetworkStatus();
   // User state used for role checks

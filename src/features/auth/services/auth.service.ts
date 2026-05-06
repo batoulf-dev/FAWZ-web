@@ -52,10 +52,7 @@ async function signUp(data: SignUpRequest): Promise<SignUpResponse> {
 
 // Verify email with OTP
 async function verifyEmail(data: VerifyEmailRequest): Promise<AuthResponse> {
-  const response = await apiClient.patch<AuthResponse>(
-    `${AUTH_BASE}/verify_user_email`,
-    data,
-  );
+  const response = await apiClient.patch<AuthResponse>(`${AUTH_BASE}/verify_user_email`, data);
 
   // Set tokens on successful verification
   if (response.data.access_token) {
@@ -67,10 +64,7 @@ async function verifyEmail(data: VerifyEmailRequest): Promise<AuthResponse> {
 
 // Login user
 async function login(data: LoginRequest): Promise<AuthResponse> {
-  const response = await apiClient.patch<AuthResponse>(
-    `${AUTH_BASE}/login_user`,
-    data,
-  );
+  const response = await apiClient.post<AuthResponse>(`${AUTH_BASE}/login_user`, data);
 
   // Set tokens on successful login
   if (response.data.access_token) {
@@ -82,28 +76,19 @@ async function login(data: LoginRequest): Promise<AuthResponse> {
 
 // Request verification/reset code
 async function requestCode(data: RequestCodeRequest): Promise<MessageResponse> {
-  const response = await apiClient.post<MessageResponse>(
-    `${AUTH_BASE}/request_code`,
-    data,
-  );
+  const response = await apiClient.post<MessageResponse>(`${AUTH_BASE}/request_code`, data);
   return response.data;
 }
 
 // Forgot password (initiate reset flow)
 async function forgotPassword(data: ForgotPasswordRequest): Promise<MessageResponse> {
-  const response = await apiClient.post<MessageResponse>(
-    `${AUTH_BASE}/forgot_password`,
-    data,
-  );
+  const response = await apiClient.post<MessageResponse>(`${AUTH_BASE}/forgot_password`, data);
   return response.data;
 }
 
 // Reset password with code
 async function resetPassword(data: ResetPasswordRequest): Promise<AuthResponse> {
-  const response = await apiClient.patch<AuthResponse>(
-    `${AUTH_BASE}/reset_password_by_user`,
-    data,
-  );
+  const response = await apiClient.patch<AuthResponse>(`${AUTH_BASE}/reset_password_by_user`, data);
 
   // Set tokens on successful reset
   if (response.data.access_token) {
@@ -117,7 +102,7 @@ async function resetPassword(data: ResetPasswordRequest): Promise<AuthResponse> 
 async function changePassword(data: ChangePasswordRequest): Promise<AuthResponse> {
   const response = await apiClient.patch<AuthResponse>(
     `${AUTH_BASE}/change_password_by_user`,
-    data,
+    data
   );
 
   // Update tokens on successful change
@@ -130,10 +115,7 @@ async function changePassword(data: ChangePasswordRequest): Promise<AuthResponse
 
 // Change password via JWT
 async function changePasswordJwt(data: ChangePasswordJwtRequest): Promise<MessageResponse> {
-  const response = await apiClient.patch<MessageResponse>(
-    `${AUTH_BASE}/change_password`,
-    data,
-  );
+  const response = await apiClient.patch<MessageResponse>(`${AUTH_BASE}/change_password`, data);
   return response.data;
 }
 
@@ -145,10 +127,7 @@ async function getProfile(): Promise<UserProfileResponse> {
 
 // Update user profile
 async function updateProfile(data: UpdateProfileRequest): Promise<MessageResponse> {
-  const response = await apiClient.patch<MessageResponse>(
-    `${AUTH_BASE}/update_profile`,
-    data,
-  );
+  const response = await apiClient.patch<MessageResponse>(`${AUTH_BASE}/update_profile`, data);
   return response.data;
 }
 
@@ -164,7 +143,7 @@ async function uploadProfileImage(file: File): Promise<MessageResponse> {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-    },
+    }
   );
   return response.data;
 }

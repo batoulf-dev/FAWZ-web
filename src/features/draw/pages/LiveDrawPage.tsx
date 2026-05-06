@@ -28,7 +28,7 @@ interface LocalLiveDrawState {
 
 // Connection status component
 function ConnectionStatus({ status }: { status: 'connected' | 'degraded' | 'disconnected' }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   const statusConfig = {
     connected: {
@@ -97,7 +97,7 @@ function WinningNumberRow({
   digits: (number | undefined)[];
   userMatchingDigits: number;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-2">
@@ -130,7 +130,7 @@ function WinnerOverlay({
   onShare: () => void;
   onViewResults: () => void;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   return (
     <div className="fixed inset-0 bg-brand-gold/95 flex items-center justify-center z-50 p-4">
@@ -171,7 +171,7 @@ function NonWinnerOverlay({
   onInviteFriends: () => void;
   onViewResults: () => void;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   return (
     <div className="fixed inset-0 bg-brand-primary/95 flex items-center justify-center z-50 p-4">
@@ -228,7 +228,7 @@ function LiveDrawSkeleton() {
 }
 
 export default function LiveDrawPage(): React.ReactElement {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { drawId } = useParams<{ drawId?: string }>();
   const isOnline = useNetworkStatus();

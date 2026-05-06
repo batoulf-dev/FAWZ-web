@@ -39,11 +39,14 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
+// Mock token constant for dev testing
+const MOCK_DEV_TOKEN = 'mock-token-for-dev';
+
 // Request interceptor - add auth token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Add auth token if available
-    if (accessToken && config.headers) {
+    // Skip auth header for mock dev token (let requests pass without auth)
+    if (accessToken && accessToken !== MOCK_DEV_TOKEN && config.headers) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
@@ -84,8 +87,8 @@ apiClient.interceptors.response.use(
     const message = data?.message ?? 'An error occurred';
     const errors = data?.errors;
 
-    // Handle 401 - attempt token refresh
-    if (status === 401 && refreshToken && error.config) {
+    // Handle 401 - attempt token refresh (skip for mock dev token)
+    if (status === 401 && refreshToken && accessToken !== MOCK_DEV_TOKEN && error.config) {
       try {
         const refreshResponse = await axios.post(
           `${env.apiBaseUrl}/auth/refresh`,

@@ -26,7 +26,7 @@ function StatsCard({
   entries: number;
   cash: number;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   return (
     <div className="grid grid-cols-3 gap-4">
@@ -72,7 +72,7 @@ function ReferralLinkCard({
   onCopy: () => void;
   onShowQR: () => void;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   const daysUntilExpiry = Math.max(
     0,
@@ -120,7 +120,7 @@ function ReferralLinkCard({
 
 // Reward explanation card
 function RewardExplanation() {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   return (
     <Card className="bg-surface-secondary">
@@ -177,7 +177,7 @@ function ReferralSkeleton() {
 }
 
 export default function ReferralPage(): React.ReactElement {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isOnline = useNetworkStatus();
 

@@ -30,7 +30,7 @@ function EntrySummaryCard({
   weekCount: number;
   totalCount: number;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   return (
     <Card className="bg-gradient-to-r from-brand-gold/10 to-brand-primary/10">
@@ -71,7 +71,7 @@ function EntryRow({
   prizeIqd?: number;
   onTap?: () => void;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
 
   const sourceLabels: Record<EntrySource, string> = {
     transaction: t('entries.sourceTransaction'),
@@ -167,7 +167,7 @@ function FilterTabs({
   activeFilter: FilterType;
   onFilterChange: (filter: FilterType) => void;
 }) {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const filters: { value: FilterType; label: string }[] = [
     { value: 'all', label: t('filter.all') },
     { value: 'transaction', label: t('entries.sourceTransaction') },
@@ -218,7 +218,7 @@ function EntryListSkeleton() {
 }
 
 export default function MyNumbersPage(): React.ReactElement {
-  const { t } = useTranslation('consumer');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isOnline = useNetworkStatus();
   const [filter, setFilter] = useState<FilterType>('all');
