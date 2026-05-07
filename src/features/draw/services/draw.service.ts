@@ -5,6 +5,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/core/network/apiClient';
+import { useAuthStore } from '@/stores/auth.store';
 import type {
   Draw,
   DrawDetail,
@@ -111,11 +112,15 @@ async function getDrawWinnersByDraw(drawId: string): Promise<DrawWinner[]> {
 }
 
 // Get user's all wins
-async function getUserWins(): Promise<DrawWinner[]> {
+async function getUserWins(userId: string): Promise<DrawWinner[]> {
   const response = await apiClient.get<DrawWinnerListResponse>(
     `${DRAW_BASE}/draw_winners`,
     {
-      params: { sort_by: 'created_at', sort_order: 'desc' },
+      params: {
+        consumer_user_id: userId,
+        sort_by: 'created_at',
+        sort_order: 'desc',
+      },
     },
   );
   return response.data.draw_winners_list;
@@ -187,9 +192,9 @@ export function useNextDraw() {
   return useQuery({
     queryKey: drawKeys.next(),
     queryFn: getNextDraw,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 60 * 1000, // Refetch every minute
+    refetchInterval: 30_000, // 30 seconds - detect live status transitions quickly
   });
 }
 
@@ -217,10 +222,12 @@ export function useDrawWinners(drawId: string, enabled = true) {
 
 // Get user's all wins
 export function useUserWins(enabled = true) {
+  const userId = useAuthStore((state) => state.user?.id);
+
   return useQuery({
-    queryKey: drawKeys.userWins('me'),
-    queryFn: getUserWins,
-    enabled,
+    queryKey: drawKeys.userWins(userId ?? 'me'),
+    queryFn: () => getUserWins(userId!),
+    enabled: enabled && !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

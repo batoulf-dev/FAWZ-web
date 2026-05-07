@@ -816,7 +816,7 @@ export const mockEntrySummary: EntrySummary = {
     bonus: 0,
     onboarding: 0,
   },
-  active_entries: 3,
+  active_entries: 2,
   won_entries: 1,
   total_prizes_iqd: 250000,
   current_draw_count: 3,
