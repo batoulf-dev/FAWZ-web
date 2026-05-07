@@ -1,73 +1,93 @@
-# React + TypeScript + Vite
+# FAWZ — فوز
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Prize Draw Loyalty Platform · Frontend**
 
-Currently, two official plugins are available:
+FAWZ is a transaction-driven prize draw engagement platform built on top of the SuperQi digital wallet in Iraq. Every qualifying SuperQi spending transaction generates cryptographic entry numbers (Fawz Numbers) for the consumer and the merchant, entered into weekly and monthly prize draws broadcast live on Al Rabiaa TV. Cash prizes are credited directly to winners' SuperQi wallets within 60 seconds of draw completion.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> ⚠️ This repository contains the **web frontend only**, running on **mock data**. It is not connected to a live backend.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+- **React 18** + **TypeScript**
+- **Vite** — build tool & dev server
+- **Zustand** — state management
+- **React Query (TanStack)** — server state & caching
+- **React Hook Form** + **Zod** — form handling & validation
+- **i18n** — Arabic (RTL) + English support
+- **Vitest** — unit & integration testing
+- **ESLint** + **Prettier** — linting & formatting
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Getting Started
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Prerequisites
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js `>=18`
+- npm `>=9`
+
+### Install & Run
+
+```bash
+# Clone the repo
+git clone https://github.com/batoulf-dev/FAWZ-web.git
+cd FAWZ-web
+
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+App runs at `http://localhost:5173`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Other Commands
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build       # Production build
+npm run preview     # Preview production build locally
+npm run lint        # Run ESLint
+npm run test        # Run tests
+npm run typecheck   # TypeScript check (no emit)
 ```
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/              # App root, providers
+├── config/           # Query client, env config
+├── core/             # Theme, API client, storage, i18n, utils, types
+├── features/         # Feature modules (auth, draws, challenges, referrals, etc.)
+├── shared/           # Reusable components, hooks, layouts
+├── stores/           # Global Zustand stores
+└── routes/           # App routing
+```
+
+---
+
+## Features (MVP)
+
+| Module | Description |
+|---|---|
+| Entry Generation | Fawz Number generation per qualifying transaction |
+| Draw Management | Weekly & monthly draw scheduling, live digit broadcast |
+| Challenge System | Onboarding, Weekly Spark streak, monthly rotating challenges |
+| Referral System | Golden Ticket referral links with fraud validation |
+| Merchant Dashboard | Merchant eligibility tracking and shared entry view |
+| Prize & Payout | Wallet credit execution, jackpot rollover, prize history |
+| Fraud & Compliance | Rules-based fraud flagging and review queue |
+| Admin Operations | Draw controls, winner export, audit log, system config |
+| Notifications | Push notification preferences and in-app notification center |
+| User Account | Fawz profile, home screen, winner social share |
+
+---
+
+## Status
+
+Currently in active development. UI is implemented with mock data. Backend integration is pending.
