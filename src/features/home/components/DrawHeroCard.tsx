@@ -19,6 +19,7 @@ interface DrawHeroCardProps {
   drawStatus: 'scheduled' | 'live' | 'completed';
   isLoading?: boolean;
   onTicketsClick?: () => void;
+  /** @deprecated - DrawHeroCard always navigates to /draws now */
   onDrawClick?: () => void;
 }
 
@@ -29,8 +30,10 @@ export function DrawHeroCard({
   drawStatus,
   isLoading = false,
   onTicketsClick,
-  onDrawClick,
+  onDrawClick: _onDrawClick,
 }: DrawHeroCardProps): React.ReactElement {
+  // _onDrawClick is intentionally unused - DrawHeroCard always navigates to /draws
+  void _onDrawClick;
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const lang = i18n.language;
@@ -66,7 +69,9 @@ export function DrawHeroCard({
     if (isLive) {
       navigate('/draws/live');
     } else {
-      onDrawClick?.();
+      // DEV ONLY: Always navigate to past draws list (SCR-003) when clicking the hero card
+      // This is for browsing results, NOT the next/scheduled draw
+      navigate('/draws');
     }
   };
 

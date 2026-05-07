@@ -86,6 +86,15 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        // DEV ONLY: /draws/live must be before /draws/:id to avoid 'live' being treated as ID
+        path: '/draws/live',
+        element: (
+          <LazyPage>
+            <LiveDrawPage />
+          </LazyPage>
+        ),
+      },
+      {
         path: '/draws/:id',
         element: (
           <LazyPage>
@@ -178,14 +187,6 @@ export const router = createBrowserRouter([
         element: (
           <LazyPage>
             <WinnerSharePage />
-          </LazyPage>
-        ),
-      },
-      {
-        path: '/draws/live',
-        element: (
-          <LazyPage>
-            <LiveDrawPage />
           </LazyPage>
         ),
       },

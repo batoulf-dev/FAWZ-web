@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { TicketCheck, Trophy, Calendar } from 'lucide-react';
+import { TicketCheck, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Skeleton } from '@/shared/components/Skeleton';
@@ -18,7 +18,7 @@ import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
 import { useInfiniteEntries, useEntrySummary } from '../services/entries.service';
 import { formatNumber, formatLocalizedDate } from '@/core/utils/formatters';
-import type { EntrySource, EntryOutcome } from '../types/entries.types';
+import type { EntrySource } from '../types/entries.types';
 
 // Filter type
 type FilterType = 'all' | 'transaction' | 'challenge' | 'referral';
@@ -27,11 +27,9 @@ type FilterType = 'all' | 'transaction' | 'challenge' | 'referral';
 function EntrySummaryCard({
   weekCount,
   activeCount,
-  totalCount,
 }: {
   weekCount: number;
   activeCount: number;
-  totalCount: number;
 }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
@@ -70,31 +68,20 @@ function EntrySummaryCard({
             </div>
           </div>
         </div>
-
-        {/* Total lifetime */}
-        <div className="mt-3 pt-3 border-t border-border-default">
-          <p className="text-sm text-text-secondary text-center">
-            {t('entries.lifetime')}: {formatNumber(totalCount, lang)} {t('entries.total')}
-          </p>
-        </div>
       </CardContent>
     </Card>
   );
 }
 
-// Entry row component (non-interactive display card)
+// Entry row component (non-interactive display card for active tickets)
 function EntryRow({
   entryNumber,
   source,
-  drawWeek,
   createdAt,
-  outcome,
 }: {
   entryNumber: string;
   source: EntrySource;
-  drawWeek: string;
   createdAt: string;
-  outcome?: EntryOutcome;
 }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
@@ -132,43 +119,23 @@ function EntryRow({
     minute: '2-digit',
   }, lang);
 
-  const isWinner = outcome === 'won';
-
   return (
-    <Card
-      className="pointer-events-none select-none"
-    >
+    <Card className="pointer-events-none select-none">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="font-mono text-lg font-bold text-text-primary">
             {formatEntryNumber(entryNumber)}
           </div>
-          {isWinner && (
-            <Badge variant="success" className="bg-brand-gold text-white">
-              <Trophy className="h-3 w-3 me-1" />
-              {t('entries.won')}
-            </Badge>
-          )}
         </div>
 
         <div className="flex items-center gap-2 mb-2">
           <Badge className={sourceColors[source]}>{sourceLabels[source]}</Badge>
-          {outcome === 'active' && (
-            <Badge className="border border-border-primary bg-transparent">{t('entries.active')}</Badge>
-          )}
-          {outcome === 'lost' && (
-            <Badge className="bg-gray-100 text-gray-500">{t('entries.lost')}</Badge>
-          )}
         </div>
 
-        <div className="flex items-center justify-between text-sm text-text-secondary">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            <span>{relativeTime}</span>
-          </div>
-          <span>{drawWeek}</span>
+        <div className="flex items-center text-sm text-text-secondary">
+          <Calendar className="h-3 w-3 me-1" />
+          <span>{relativeTime}</span>
         </div>
-
       </CardContent>
     </Card>
   );
@@ -254,7 +221,8 @@ export default function MyNumbersPage(): React.ReactElement {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteEntries({
-    source: filter === 'all' ? undefined : filter,
+    ...(filter !== 'all' ? { source: filter } : {}),
+    outcome: 'active',
     page_size: 20,
   });
 
@@ -309,7 +277,6 @@ export default function MyNumbersPage(): React.ReactElement {
           <EntrySummaryCard
             weekCount={summary.entries_this_week}
             activeCount={summary.active_entries}
-            totalCount={summary.total_entries}
           />
         )}
 
@@ -332,9 +299,7 @@ export default function MyNumbersPage(): React.ReactElement {
                 key={entry.fawz_entry_id}
                 entryNumber={entry.entry_number}
                 source={entry.source}
-                drawWeek={entry.draw_week ?? ''}
                 createdAt={entry.created_at}
-                outcome={entry.outcome}
               />
             ))}
 

@@ -34,7 +34,7 @@ export function WeeklySparkCard({
 
   if (isLoading) {
     return (
-      <Card className="bg-card">
+      <Card className="bg-white">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
             <Skeleton className="h-4 w-28" />
@@ -52,7 +52,7 @@ export function WeeklySparkCard({
   }
 
   return (
-    <Card className="bg-card">
+    <Card className="bg-white">
       <CardContent className="p-4">
         {/* Header */}
         <div className="flex items-center mb-3">

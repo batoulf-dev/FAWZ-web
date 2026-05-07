@@ -43,6 +43,96 @@ import type {
 } from '@/features/prizes/types/prizes.types';
 
 // ===========================================
+// DEV ONLY - SESSION SEED GENERATION
+// Generated once at module import, regenerates on every page load
+// ===========================================
+
+/** DEV ONLY: Module load timestamp - used for 10-second finalization timer */
+export const MODULE_LOAD_TIME = Date.now();
+
+/** DEV ONLY: Helper to generate random int in range [min, max] */
+export function randomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/** DEV ONLY: Generate a random 10-digit number string (no leading zeros) */
+export function random10Digit(): string {
+  const firstDigit = randomInt(1, 9); // No leading zero
+  const rest = Array.from({ length: 9 }, () => randomInt(0, 9)).join('');
+  return `${firstDigit}${rest}`;
+}
+
+/** DEV ONLY: Generate a random 10-digit number string (no leading zeros) - alias */
+function generateTenDigitNumber(): string {
+  return random10Digit();
+}
+
+/** DEV ONLY: Get ISO week string for a date */
+export function getISOWeek(date: Date): string {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${d.getFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
+/** DEV ONLY: Session seed object - shared across all fixtures */
+export interface SessionSeed {
+  ticketCount: number;
+  winningNumbers: [string, string, string];
+  jackpot: number;
+  pastDrawCount: number;
+  weeklySpark: { current: number; target: number };
+  pastDrawWinIndices: number[]; // Which past draws the user won in (0-2 of them)
+  pastDrawWinningNumbers: Array<[string, string, string]>; // Winning numbers for each past draw
+  moduleLoadTime: number; // Timestamp when module loaded (for 10s timer)
+}
+
+/** DEV ONLY: Generate session seed - runs once when module loads */
+function generateSessionSeed(): SessionSeed {
+  const pastDrawCount = randomInt(3, 8);
+
+  // Randomly assign 0-2 past draws as having user wins
+  const numWins = randomInt(0, 2);
+  const pastDrawWinIndices: number[] = [];
+  while (pastDrawWinIndices.length < numWins && pastDrawWinIndices.length < pastDrawCount) {
+    const idx = randomInt(0, pastDrawCount - 1);
+    if (!pastDrawWinIndices.includes(idx)) {
+      pastDrawWinIndices.push(idx);
+    }
+  }
+
+  // Generate winning numbers for each past draw
+  const pastDrawWinningNumbers: Array<[string, string, string]> = [];
+  for (let i = 0; i < pastDrawCount; i++) {
+    pastDrawWinningNumbers.push([
+      generateTenDigitNumber(),
+      generateTenDigitNumber(),
+      generateTenDigitNumber(),
+    ]);
+  }
+
+  return {
+    ticketCount: randomInt(2, 12), // DEV ONLY: 2-12 tickets per spec
+    winningNumbers: [
+      generateTenDigitNumber(),
+      generateTenDigitNumber(),
+      generateTenDigitNumber(),
+    ],
+    jackpot: randomInt(50_000_000, 300_000_000), // DEV ONLY: 50M-300M IQD
+    pastDrawCount,
+    weeklySpark: { current: randomInt(1, 7), target: 5 },
+    pastDrawWinIndices,
+    pastDrawWinningNumbers,
+    moduleLoadTime: MODULE_LOAD_TIME, // Use shared module load time
+  };
+}
+
+/** DEV ONLY: Session seed - generated once per page load */
+export const SESSION: SessionSeed = generateSessionSeed();
+
+// ===========================================
 // User Fixtures
 // ===========================================
 
@@ -63,6 +153,235 @@ export const mockAuthTokens: AuthTokens = {
   token_type: 'Bearer',
   expires_in: 3600,
 };
+
+// ===========================================
+// DEV ONLY - Dynamic Active Tickets (Current Draw)
+// ===========================================
+
+/** DEV ONLY: Compute trailing digits for an entry number */
+function computeTrailingDigits(entryNumber: string): {
+  trailing_1: number;
+  trailing_2: number;
+  trailing_3: number;
+  trailing_4: number;
+  trailing_5: number;
+  trailing_6: number;
+  trailing_7: number;
+  trailing_8: number;
+  trailing_9: number;
+  trailing_10: number;
+} {
+  const num = entryNumber.padStart(10, '0');
+  return {
+    trailing_1: parseInt(num.slice(-1), 10),
+    trailing_2: parseInt(num.slice(-2), 10),
+    trailing_3: parseInt(num.slice(-3), 10),
+    trailing_4: parseInt(num.slice(-4), 10),
+    trailing_5: parseInt(num.slice(-5), 10),
+    trailing_6: parseInt(num.slice(-6), 10),
+    trailing_7: parseInt(num.slice(-7), 10),
+    trailing_8: parseInt(num.slice(-8), 10),
+    trailing_9: parseInt(num.slice(-9), 10),
+    trailing_10: parseInt(num, 10),
+  };
+}
+
+/** DEV ONLY: Generate active entries for current draw */
+function generateActiveEntries(): FawzEntry[] {
+  const currentWeek = getISOWeek(new Date());
+  const entries: FawzEntry[] = [];
+
+  for (let i = 0; i < SESSION.ticketCount; i++) {
+    const entryNumber = generateTenDigitNumber();
+    const trailing = computeTrailingDigits(entryNumber);
+    const sources: Array<'transaction' | 'challenge' | 'referral'> = ['transaction', 'challenge', 'referral'];
+    const source = sources[randomInt(0, 2)];
+
+    entries.push({
+      fawz_entry_id: `session-entry-${i.toString().padStart(3, '0')}`,
+      tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+      consumer_user_id: mockUser.id,
+      entry_number: entryNumber,
+      source,
+      draw_week: currentWeek,
+      ...trailing,
+      transaction_amount_iqd: source === 'transaction' ? randomInt(10000, 200000) : 0,
+      transaction_channel: source === 'transaction' ? 'pos' : undefined,
+      multiplier_applied: 1,
+      is_valid: true,
+      outcome: 'active',
+      outcome_draw_id: undefined,
+      digits_matched: undefined,
+      prize_iqd: undefined,
+      created_at: new Date(Date.now() - randomInt(0, 7) * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  }
+
+  return entries;
+}
+
+/** DEV ONLY: Session-based active entries */
+export const sessionActiveEntries: FawzEntry[] = generateActiveEntries();
+
+// ===========================================
+// DEV ONLY - Next Draw (Upcoming - not finalized)
+// Becomes finalized after 10 seconds from MODULE_LOAD_TIME
+// ===========================================
+
+/** DEV ONLY: Get the draw time (10 seconds from module load) */
+export function getNextDrawTime(): number {
+  return MODULE_LOAD_TIME + 10000;
+}
+
+/** DEV ONLY: Check if the draw is finalized (10 seconds elapsed) */
+export function isDrawFinalized(): boolean {
+  return Date.now() >= getNextDrawTime();
+}
+
+/** DEV ONLY: Next draw - becomes finalized after 10 seconds */
+export const sessionNextDraw: Draw = {
+  draw_id: 'next-draw',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  draw_date: new Date(MODULE_LOAD_TIME + 10000).toISOString(), // DEV ONLY: Full ISO for countdown
+  draw_time: '21:00:00',
+  draw_type: 'weekly',
+  draw_number: 99,
+  status: 'scheduled', // Will become 'finalized' after 10s in handlers
+  entry_cutoff_at: new Date(MODULE_LOAD_TIME + 10000).toISOString(),
+  scheduled_broadcast_at: new Date(MODULE_LOAD_TIME + 10000).toISOString(),
+  entry_pool_size: randomInt(100000, 500000),
+  entry_pool_snapshot_at: undefined,
+  broadcast_started_at: undefined,
+  finalized_at: undefined,
+  winning_numbers: undefined, // Will be populated after finalization
+  winning_number_1: undefined,
+  winning_number_2: undefined,
+  winning_number_3: undefined,
+  prize_tier_last_3_iqd: 25000,
+  prize_tier_last_5_iqd: 250000,
+  prize_tier_last_7_iqd: 2500000,
+  prize_tier_last_10_iqd: 25000000,
+  jackpot_amount_iqd: SESSION.jackpot,
+  jackpot_rollover_iqd: 0,
+  jackpot_claimed: false,
+  jackpot_winners_count: 0,
+  total_winners: 0,
+  total_payout_iqd: 0,
+  consumer_winners: 0,
+  consumer_payout_iqd: 0,
+  merchant_winners: 0,
+  merchant_payout_iqd: 0,
+  physical_draw_mismatch: false,
+  created_at: new Date(MODULE_LOAD_TIME - 7 * 24 * 60 * 60 * 1000).toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+// ===========================================
+// DEV ONLY - Past Draws (Finalized - historical)
+// ===========================================
+
+/** DEV ONLY: Generate past finalized draws */
+function generatePastDraws(): Draw[] {
+  const draws: Draw[] = [];
+
+  for (let i = 0; i < SESSION.pastDrawCount; i++) {
+    const daysAgo = (i + 1) * 7; // 7 days ago, 14 days ago, etc.
+    const drawDate = new Date(SESSION.moduleLoadTime - daysAgo * 24 * 60 * 60 * 1000);
+    const winningNumbers = SESSION.pastDrawWinningNumbers[i];
+
+    draws.push({
+      draw_id: `past-draw-${i.toString().padStart(3, '0')}`,
+      tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+      draw_date: drawDate.toISOString().split('T')[0],
+      draw_time: '21:00:00',
+      draw_type: 'weekly',
+      draw_number: 98 - i,
+      status: 'finalized',
+      entry_cutoff_at: drawDate.toISOString(),
+      scheduled_broadcast_at: drawDate.toISOString(),
+      entry_pool_size: randomInt(100000, 500000),
+      entry_pool_snapshot_at: drawDate.toISOString(),
+      broadcast_started_at: drawDate.toISOString(),
+      finalized_at: new Date(drawDate.getTime() + 30 * 60 * 1000).toISOString(),
+      winning_numbers: winningNumbers[0],
+      winning_number_1: parseInt(winningNumbers[0], 10),
+      winning_number_2: parseInt(winningNumbers[1], 10),
+      winning_number_3: parseInt(winningNumbers[2], 10),
+      prize_tier_last_3_iqd: 25000,
+      prize_tier_last_5_iqd: 250000,
+      prize_tier_last_7_iqd: 2500000,
+      prize_tier_last_10_iqd: 25000000,
+      jackpot_amount_iqd: 10000000, // DEV ONLY: Fixed 10M IQD weekly jackpot
+      jackpot_rollover_iqd: 0,
+      jackpot_claimed: Math.random() > 0.8, // 20% chance of jackpot claimed
+      jackpot_winners_count: Math.random() > 0.8 ? randomInt(1, 2) : 0,
+      total_winners: randomInt(100, 500), // DEV ONLY: Reasonable winner count
+      total_payout_iqd: randomInt(50000000, 100000000), // DEV ONLY: 50M-100M IQD
+      consumer_winners: randomInt(80, 400),
+      consumer_payout_iqd: randomInt(40000000, 80000000), // DEV ONLY: 40M-80M IQD
+      merchant_winners: randomInt(10, 100),
+      merchant_payout_iqd: randomInt(5000000, 20000000), // DEV ONLY: 5M-20M IQD
+      physical_draw_mismatch: false,
+      created_at: new Date(drawDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date(drawDate.getTime() + 30 * 60 * 1000).toISOString(),
+    });
+  }
+
+  return draws;
+}
+
+/** DEV ONLY: Session-based past draws */
+export const sessionPastDraws: Draw[] = generatePastDraws();
+
+/** DEV ONLY: Generate won entries for past draws where user won */
+function generateWonEntries(): FawzEntry[] {
+  const entries: FawzEntry[] = [];
+
+  for (const drawIndex of SESSION.pastDrawWinIndices) {
+    const draw = sessionPastDraws[drawIndex];
+    if (!draw) continue;
+
+    // Create a winning entry that matches one of the winning numbers
+    const winningNumber = SESSION.pastDrawWinningNumbers[drawIndex][0];
+    const digitsMatched = randomInt(3, 5) as 3 | 5; // Last 3 or Last 5 for variety
+    const matchSuffix = winningNumber.slice(-digitsMatched);
+    const entryNumber = generateTenDigitNumber().slice(0, -digitsMatched) + matchSuffix;
+    const trailing = computeTrailingDigits(entryNumber);
+
+    const prizeByDigits: Record<number, number> = {
+      3: 25000,
+      5: 250000,
+      7: 2500000,
+      10: 25000000,
+    };
+
+    entries.push({
+      fawz_entry_id: `session-won-entry-${drawIndex.toString().padStart(3, '0')}`,
+      tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+      consumer_user_id: mockUser.id,
+      entry_number: entryNumber,
+      source: 'transaction',
+      draw_week: getISOWeek(new Date(draw.draw_date)),
+      ...trailing,
+      transaction_amount_iqd: randomInt(10000, 200000),
+      transaction_channel: 'pos',
+      multiplier_applied: 1,
+      is_valid: true,
+      outcome: 'won',
+      outcome_draw_id: draw.draw_id,
+      digits_matched: digitsMatched,
+      prize_iqd: prizeByDigits[digitsMatched],
+      created_at: new Date(new Date(draw.draw_date).getTime() - randomInt(1, 7) * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: draw.finalized_at ?? new Date().toISOString(),
+    });
+  }
+
+  return entries;
+}
+
+/** DEV ONLY: Session-based won entries from past draws */
+export const sessionWonEntries: FawzEntry[] = generateWonEntries();
 
 // ===========================================
 // Draw Fixtures

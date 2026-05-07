@@ -16,7 +16,7 @@ import { ErrorState } from '@/shared/components/ErrorState';
 import { OfflineBanner } from '@/shared/components/OfflineBanner';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
-import { useDrawList } from '../services/draw.service';
+import { useDrawList, useUserWins } from '../services/draw.service';
 import { formatCurrency, formatLocalizedDate, formatNumber, DATE_FORMAT_PRESETS } from '@/core/utils/formatters';
 import type { DrawType } from '../types/draw.types';
 
@@ -30,6 +30,7 @@ interface DrawRowProps {
   totalPayout: number;
   userWon?: boolean;
   userPrize?: number;
+  winningNumbers?: [string, string, string] | null;
   onTap: () => void;
 }
 
@@ -40,6 +41,7 @@ function DrawRow({
   totalPayout,
   userWon = false,
   userPrize,
+  winningNumbers,
   onTap,
 }: DrawRowProps) {
   const { t, i18n } = useTranslation();
@@ -58,9 +60,14 @@ function DrawRow({
             <Badge variant={drawType === 'weekly' ? 'default' : 'secondary'}>
               {drawType === 'weekly' ? t('draw.weekly') : t('draw.monthly')}
             </Badge>
-            {userWon && (
+            {/* User outcome badge - gold if won, grey if not */}
+            {userWon ? (
               <Badge variant="success" className="bg-brand-gold text-white">
-                {t('draw.youWon')}
+                {t('draw.youWonBadge')}
+              </Badge>
+            ) : (
+              <Badge variant="default" className="bg-gray-200 text-gray-600">
+                {t('draw.didNotWinBadge')}
               </Badge>
             )}
           </div>
@@ -72,11 +79,28 @@ function DrawRow({
           <span className="text-sm">{formattedDate}</span>
         </div>
 
+        {/* Winning numbers display */}
+        {winningNumbers && (
+          <div className="mb-3">
+            <p className="text-xs text-text-muted mb-1">{t('draw.winningTickets')}</p>
+            <div className="flex gap-2 flex-wrap">
+              {winningNumbers.map((num, idx) => (
+                <span
+                  key={idx}
+                  className="font-mono text-sm bg-surface-secondary px-2 py-1 rounded"
+                >
+                  {String(num).padStart(10, '0')}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-text-secondary">
             <Users className="h-4 w-4" />
             <span className="text-sm">
-              {formatNumber(totalWinners, lang)} {t('draw.winners')}
+              {formatNumber(totalWinners, lang)} {t('draw.winnersCount')}
             </span>
           </div>
           <div className="text-end">
@@ -180,6 +204,18 @@ export default function DrawListPage(): React.ReactElement {
     page_size: 20,
   });
 
+  // Fetch user wins to show outcome badges
+  const { data: userWins } = useUserWins(true);
+
+  // Create a map of draw_id -> user's prize for that draw
+  const userWinsMap = new Map<string, number>();
+  if (userWins) {
+    for (const win of userWins) {
+      const existing = userWinsMap.get(win.draw_id) ?? 0;
+      userWinsMap.set(win.draw_id, existing + (win.prize_iqd ?? 0));
+    }
+  }
+
   const draws = drawsData?.draws_list ?? [];
 
   if (isLoading) {
@@ -236,16 +272,34 @@ export default function DrawListPage(): React.ReactElement {
           />
         ) : (
           <div className="space-y-4">
-            {draws.map((draw) => (
-              <DrawRow
-                key={draw.draw_id}
-                drawType={draw.draw_type}
-                drawDate={draw.draw_date}
-                totalWinners={draw.total_winners ?? 0}
-                totalPayout={draw.total_payout_iqd ?? 0}
-                onTap={() => navigate(`/draws/${draw.draw_id}`)}
-              />
-            ))}
+            {draws.map((draw) => {
+              const userPrize = userWinsMap.get(draw.draw_id);
+              const userWon = userPrize !== undefined && userPrize > 0;
+
+              // Build winning numbers array
+              const winningNumbers: [string, string, string] | null =
+                draw.winning_number_1 && draw.winning_number_2 && draw.winning_number_3
+                  ? [
+                      String(draw.winning_number_1).padStart(10, '0'),
+                      String(draw.winning_number_2).padStart(10, '0'),
+                      String(draw.winning_number_3).padStart(10, '0'),
+                    ]
+                  : null;
+
+              return (
+                <DrawRow
+                  key={draw.draw_id}
+                  drawType={draw.draw_type}
+                  drawDate={draw.draw_date}
+                  totalWinners={draw.total_winners ?? 0}
+                  totalPayout={draw.total_payout_iqd ?? 0}
+                  userWon={userWon}
+                  userPrize={userPrize}
+                  winningNumbers={winningNumbers}
+                  onTap={() => navigate(`/draws/${draw.draw_id}`)}
+                />
+              );
+            })}
           </div>
         )}
       </div>

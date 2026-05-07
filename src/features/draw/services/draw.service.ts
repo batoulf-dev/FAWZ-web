@@ -226,7 +226,7 @@ export function useUserWins(enabled = true) {
 
   return useQuery({
     queryKey: drawKeys.userWins(userId ?? 'me'),
-    queryFn: () => getUserWins(userId!),
+    queryFn: () => getUserWins(userId as string),
     enabled: enabled && !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes

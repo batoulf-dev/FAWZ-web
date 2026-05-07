@@ -52,7 +52,34 @@ function HomePageSkeleton(): React.ReactElement {
   );
 }
 
-// Live draw redirect banner component
+// DEV ONLY: Live draw banner that appears when countdown hits 10s
+// This is the orange banner that shows when the draw goes live
+function LiveDrawBannerNew({
+  onClick,
+}: {
+  onClick: () => void;
+}): React.ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full bg-orange-500 text-white px-4 py-3 cursor-pointer hover:bg-orange-600 transition-colors"
+    >
+      <div className="flex items-center justify-center gap-2">
+        {/* Pulsing red dot only */}
+        <span className="relative flex h-3 w-3">
+          <span className="animate-ping inline-flex h-full w-full rounded-full bg-red-500" />
+        </span>
+        <span className="text-sm font-semibold">
+          {t('home.liveDrawBannerWatch')}
+        </span>
+      </div>
+    </button>
+  );
+}
+
+// Legacy: Live draw redirect banner component (auto-redirect)
 function LiveDrawBanner({
   onCancel,
 }: {
@@ -89,7 +116,18 @@ export default function HomePage(): React.ReactElement {
   // State for cancelled redirect
   const [cancelledRedirect, setCancelledRedirect] = useState(false);
 
-  // Live draw auto-redirect effect
+  // DEV ONLY: State for live draw banner (countdown starts at 12s, shows at 10s)
+  const [isLiveBannerVisible, setIsLiveBannerVisible] = useState(false);
+
+  // DEV ONLY: Timer to show live draw banner (countdown starts at 12s, banner appears at 10s)
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setIsLiveBannerVisible(true);
+    }, 2000); // DEV ONLY: countdown starts at 12s, shows banner when it hits 10s (2 second delay)
+    return () => clearTimeout(timeout);
+  }, []);
+
+  // Legacy: Live draw auto-redirect effect
   useEffect(() => {
     if (data?.stats.drawStatus === 'live' && !cancelledRedirect) {
       const timer = setTimeout(() => {
@@ -103,16 +141,15 @@ export default function HomePage(): React.ReactElement {
   // Handle navigation
   const handleTicketsClick = () => navigate('/entries');
   const handleDrawClick = () => {
-    if (data?.stats.nextDrawId) {
-      navigate(`/draws/${data.stats.nextDrawId}`);
-    } else {
-      navigate('/draws');
-    }
+    // DEV ONLY: Always navigate to past draws list
+    navigate('/draws');
   };
   const handleJackpotClick = () => navigate('/draws');
   const handleChallengeClick = (challengeId: string) => navigate(`/challenges/${challengeId}`);
   const handleViewAllChallenges = () => navigate('/challenges');
   const handleCancelRedirect = () => setCancelledRedirect(true);
+  // DEV ONLY: Handler for live draw banner click
+  const handleLiveBannerClick = () => navigate('/draws/live');
 
   // Loading state
   if (isLoading) {
@@ -150,6 +187,11 @@ export default function HomePage(): React.ReactElement {
 
       {/* Offline Banner */}
       {!isOnline && <OfflineBanner />}
+
+      {/* DEV ONLY: Live Draw Banner - edge-to-edge, appears when countdown hits 10s */}
+      {isLiveBannerVisible && (
+        <LiveDrawBannerNew onClick={handleLiveBannerClick} />
+      )}
 
       <div className="p-4 space-y-4">
         {/* 1. Draw Hero Card (DOMINANT) */}

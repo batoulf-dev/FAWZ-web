@@ -7,12 +7,10 @@ import { http, HttpResponse, delay } from 'msw';
 import {
   mockUser,
   mockAuthTokens,
-  mockDrawList,
   mockDraw,
   mockDrawWinnersList,
   mockDrawWinnerUserJackpot,
   mockEntryList,
-  mockEntrySummary,
   mockNotificationList,
   mockUnreadCount,
   mockNotificationPreferences,
@@ -28,9 +26,33 @@ import {
   mockConsentList,
   mockConsumerUser,
   mockConsumerUserList,
+  // DEV ONLY: Session-based dynamic fixtures
+  SESSION,
+  sessionActiveEntries,
+  sessionNextDraw,
+  sessionPastDraws,
+  sessionWonEntries,
+  isDrawFinalized,
+  getNextDrawTime,
+  randomInt,
 } from '../fixtures';
 
 const API_BASE = 'https://dev.iqarx.com/api/v0';
+
+// ===========================================
+// DEV ONLY: 10-Second Finalization Timer
+// Uses MODULE_LOAD_TIME from fixtures for consistent timing
+// ===========================================
+
+/** DEV ONLY: Check if draw is finalized (10 seconds after module load) */
+function isFinalized(): boolean {
+  return isDrawFinalized();
+}
+
+/** DEV ONLY: Get the draw time ISO string */
+function getDrawTimeISO(): string {
+  return new Date(getNextDrawTime()).toISOString();
+}
 
 // ===========================================
 // User Management Handlers
@@ -126,84 +148,162 @@ const userManagementHandlers = [
 
 // ===========================================
 // Draw Management Handlers
+// DEV ONLY: Uses SESSION-based mock data with 10s finalization timer
 // ===========================================
 
-// Helper: compute next Thursday 9 PM (draw time)
-function getNextThursdayDrawDate(): string {
-  const now = new Date();
-  const daysUntilThursday = (4 - now.getDay() + 7) % 7 || 7;
-  const nextThursday = new Date(now);
-  nextThursday.setDate(now.getDate() + daysUntilThursday);
-  nextThursday.setHours(21, 0, 0, 0);
-  return nextThursday.toISOString();
-}
-
-function getNextThursdayDrawDateShort(): string {
-  const now = new Date();
-  const daysUntilThursday = (4 - now.getDay() + 7) % 7 || 7;
-  const nextThursday = new Date(now);
-  nextThursday.setDate(now.getDate() + daysUntilThursday);
-  return nextThursday.toISOString().split('T')[0];
-}
-
 const drawManagementHandlers = [
+  // DEV ONLY: Get next draw (special endpoint)
+  // Always returns the scheduled draw with draw_date = MODULE_LOAD_TIME + 10s
+  http.get(`${API_BASE}/fawz_draw_management/draws/next`, async () => {
+    await delay(100);
+    const drawTimeISO = getDrawTimeISO();
+    // DEV ONLY: Return draw_date as full ISO timestamp for countdown to work
+    // (home.service.ts uses draw_date for nextDrawDate which feeds the countdown)
+    const nextDrawCopy = {
+      ...sessionNextDraw,
+      draw_date: drawTimeISO, // DEV ONLY: Full ISO for countdown
+      entry_cutoff_at: drawTimeISO,
+      scheduled_broadcast_at: drawTimeISO,
+    };
+    return HttpResponse.json(nextDrawCopy);
+  }),
+
   // List draws (plural - matches draw.service.ts)
+  // DEV ONLY: Returns only PAST finalized draws, NOT the next draw
   http.get(`${API_BASE}/fawz_draw_management/draws`, async ({ request }) => {
     await delay(100);
     const url = new URL(request.url);
     const status = url.searchParams.get('status');
+    const drawType = url.searchParams.get('draw_type');
+    const drawTimeISO = getDrawTimeISO();
 
-    // Compute dynamic draw date for scheduled draws
-    const nextDrawDate = getNextThursdayDrawDate();
-    const nextDrawDateShort = getNextThursdayDrawDateShort();
-
-    // Create dynamic scheduled draw
-    const scheduledDraw = {
-      ...mockDraw,
-      draw_id: '660e8400-e29b-41d4-a716-446655440099',
-      draw_number: 44,
-      draw_date: nextDrawDateShort,
-      status: 'scheduled',
-      entry_cutoff_at: nextDrawDate,
-      scheduled_broadcast_at: nextDrawDate,
-      finalized_at: undefined,
-      winning_numbers: undefined,
-      winning_number_1: undefined,
-      winning_number_2: undefined,
-      winning_number_3: undefined,
-    };
-
-    // If querying for scheduled draws, return the dynamic scheduled draw
+    // DEV ONLY: If querying for scheduled draws, return session next draw
     if (status === 'scheduled') {
+      if (isFinalized()) {
+        // After 10s, no scheduled draws - return empty
+        return HttpResponse.json({
+          draws_list: [],
+          total_draws: 0,
+          page: 1,
+          page_size: 20,
+        });
+      }
+
       return HttpResponse.json({
-        draws_list: [scheduledDraw],
+        draws_list: [{
+          ...sessionNextDraw,
+          draw_date: drawTimeISO, // DEV ONLY: Full ISO for countdown
+          entry_cutoff_at: drawTimeISO,
+          scheduled_broadcast_at: drawTimeISO,
+        }],
         total_draws: 1,
         page: 1,
         page_size: 20,
       });
     }
 
-    // Get draw_type filter
-    const drawType = url.searchParams.get('draw_type');
+    // DEV ONLY: If querying for live draws, return the finalized draw as "live" if it's within the display window
+    if (status === 'live') {
+      if (isFinalized()) {
+        // Return the just-finalized draw as if it's currently live
+        const totalWinners = randomInt(400000, 900000);
+        const totalPayoutIqd = randomInt(50000000, 150000000);
+        return HttpResponse.json({
+          draws_list: [{
+            ...sessionNextDraw,
+            status: 'finalized', // DEV ONLY: Actually finalized but shown on live page
+            draw_date: drawTimeISO,
+            winning_numbers: SESSION.winningNumbers[0],
+            winning_number_1: parseInt(SESSION.winningNumbers[0], 10),
+            winning_number_2: parseInt(SESSION.winningNumbers[1], 10),
+            winning_number_3: parseInt(SESSION.winningNumbers[2], 10),
+            finalized_at: drawTimeISO,
+            total_winners: totalWinners,
+            total_payout_iqd: totalPayoutIqd,
+          }],
+          total_draws: 1,
+          page: 1,
+          page_size: 20,
+        });
+      }
+      // Before finalization, no live draw yet
+      return HttpResponse.json({
+        draws_list: [],
+        total_draws: 0,
+        page: 1,
+        page_size: 20,
+      });
+    }
 
-    // Build the full list with the scheduled draw
-    let draws = [...mockDrawList.draws_list, scheduledDraw];
+    // DEV ONLY: Return only past finalized draws (never next-draw)
+    let draws = [...sessionPastDraws];
 
     // Filter by draw_type if specified
     if (drawType && drawType !== 'all') {
       draws = draws.filter((draw) => draw.draw_type === drawType);
     }
 
+    // Filter by status if specified (other than scheduled)
+    if (status && status !== 'scheduled') {
+      draws = draws.filter((draw) => draw.status === status);
+    }
+
     return HttpResponse.json({
-      ...mockDrawList,
       draws_list: draws,
       total_draws: draws.length,
+      page: 1,
+      page_size: 20,
     });
   }),
 
   // Get draw by ID (plural)
-  http.get(`${API_BASE}/fawz_draw_management/draws/:draw_id`, async () => {
+  // DEV ONLY: Handles 'next-draw' specially with 10s timer
+  http.get(`${API_BASE}/fawz_draw_management/draws/:draw_id`, async ({ params }) => {
     await delay(100);
+    const { draw_id } = params;
+    const drawTimeISO = getDrawTimeISO();
+
+    // DEV ONLY: Handle 'next-draw' with 10-second finalization simulation
+    if (draw_id === 'next-draw') {
+      if (isFinalized()) {
+        // DEV ONLY: Return finalized draw with winning numbers and payouts
+        const totalWinners = randomInt(400000, 900000); // 400K-900K winners per spec
+        const totalPayoutIqd = randomInt(50000000, 150000000); // 50M-150M IQD
+        return HttpResponse.json({
+          ...sessionNextDraw,
+          status: 'finalized',
+          draw_date: drawTimeISO, // DEV ONLY: Full ISO
+          winning_numbers: SESSION.winningNumbers[0],
+          winning_number_1: parseInt(SESSION.winningNumbers[0], 10),
+          winning_number_2: parseInt(SESSION.winningNumbers[1], 10),
+          winning_number_3: parseInt(SESSION.winningNumbers[2], 10),
+          finalized_at: drawTimeISO,
+          total_winners: totalWinners,
+          total_payout_iqd: totalPayoutIqd,
+          consumer_winners: Math.floor(totalWinners * 0.8),
+          consumer_payout_iqd: Math.floor(totalPayoutIqd * 0.8),
+          merchant_winners: Math.floor(totalWinners * 0.2),
+          merchant_payout_iqd: Math.floor(totalPayoutIqd * 0.2),
+          jackpot_claimed: Math.random() > 0.8,
+        });
+      } else {
+        // DEV ONLY: Return scheduled draw (not yet finalized)
+        return HttpResponse.json({
+          ...sessionNextDraw,
+          draw_date: drawTimeISO, // DEV ONLY: Full ISO for countdown
+          entry_cutoff_at: drawTimeISO,
+          scheduled_broadcast_at: drawTimeISO,
+        });
+      }
+    }
+
+    // DEV ONLY: Check if it's a past draw ID
+    const pastDraw = sessionPastDraws.find((d) => d.draw_id === draw_id);
+    if (pastDraw) {
+      return HttpResponse.json(pastDraw);
+    }
+
+    // Fallback to legacy mock draw for backwards compatibility
     return HttpResponse.json(mockDraw);
   }),
 
@@ -301,40 +401,88 @@ const drawManagementHandlers = [
 
 const entryGenerationHandlers = [
   // List entries (plural - matches entries.service.ts)
+  // DEV ONLY: Returns SESSION active entries + won entries
   http.get(`${API_BASE}/fawz_entry_generation/fawz_entries`, async ({ request }) => {
     await delay(100);
     const url = new URL(request.url);
     const source = url.searchParams.get('source');
+    const outcome = url.searchParams.get('outcome');
     const consumerId = url.searchParams.get('consumer_user_id');
 
+    // DEV ONLY: Combine session active entries + won entries
+    const allSessionEntries = [...sessionActiveEntries, ...sessionWonEntries];
+
     // Filter by consumer_user_id - default to authenticated user (mockUser.id)
-    // This simulates backend behavior where token identifies the user
     const userId = consumerId || mockUser.id;
-    let entries = mockEntryList.fawz_entries_list.filter(
+    let entries = allSessionEntries.filter(
       (entry) => entry.consumer_user_id === userId,
     );
 
-    // Filter by source if specified
-    if (source && source !== 'all') {
+    // Filter by outcome if specified (ignore 'all', 'undefined', or empty string)
+    if (outcome && outcome !== 'all' && outcome !== 'undefined' && outcome !== '') {
+      entries = entries.filter((entry) => entry.outcome === outcome);
+    }
+
+    // Filter by source if specified (ignore 'all', 'undefined', or empty string)
+    if (source && source !== 'all' && source !== 'undefined' && source !== '') {
       entries = entries.filter((entry) => entry.source === source);
     }
 
     return HttpResponse.json({
-      ...mockEntryList,
       fawz_entries_list: entries,
       total_fawz_entries: entries.length,
+      page: 1,
+      page_size: 20,
     });
   }),
 
   // Get entry summary
+  // DEV ONLY: Returns SESSION-based summary
   http.get(`${API_BASE}/fawz_entry_generation/fawz_entries/summary`, async () => {
     await delay(100);
-    return HttpResponse.json(mockEntrySummary);
+    // DEV ONLY: Calculate summary from SESSION data
+    const activeCount = sessionActiveEntries.length;
+    const wonCount = sessionWonEntries.length;
+    const totalPrizes = sessionWonEntries.reduce((sum, e) => sum + (e.prize_iqd ?? 0), 0);
+
+    // Count entries by source
+    const allEntries = [...sessionActiveEntries, ...sessionWonEntries];
+    const entriesBySource = {
+      transaction: allEntries.filter((e) => e.source === 'transaction').length,
+      challenge: allEntries.filter((e) => e.source === 'challenge').length,
+      referral: allEntries.filter((e) => e.source === 'referral').length,
+      retroactive: 0,
+      bonus: 0,
+      onboarding: 0,
+    };
+
+    return HttpResponse.json({
+      total_entries: allEntries.length,
+      entries_this_week: activeCount,
+      entries_this_month: allEntries.length,
+      entries_by_source: entriesBySource,
+      active_entries: activeCount,
+      won_entries: wonCount,
+      total_prizes_iqd: totalPrizes,
+      current_draw_count: activeCount, // DEV ONLY: SESSION.ticketCount
+      lifetime_count: allEntries.length + 30, // Add some history
+      weekly_unique_days: SESSION.weeklySpark.current,
+    });
   }),
 
   // Get entry by ID (plural)
-  http.get(`${API_BASE}/fawz_entry_generation/fawz_entries/:entry_id`, async () => {
+  http.get(`${API_BASE}/fawz_entry_generation/fawz_entries/:entry_id`, async ({ params }) => {
     await delay(100);
+    const { entry_id } = params;
+
+    // DEV ONLY: Search in session entries first
+    const allSessionEntries = [...sessionActiveEntries, ...sessionWonEntries];
+    const sessionEntry = allSessionEntries.find((e) => e.fawz_entry_id === entry_id);
+    if (sessionEntry) {
+      return HttpResponse.json(sessionEntry);
+    }
+
+    // Fallback to legacy mock entry
     return HttpResponse.json(mockEntryList.fawz_entries_list[0]);
   }),
 ];
