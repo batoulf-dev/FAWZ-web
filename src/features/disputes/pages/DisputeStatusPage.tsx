@@ -60,7 +60,7 @@ export default function DisputeStatusPage(): JSX.Element {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="bg-bg-primary">
         <DisputeHistoryHeader onBack={handleBack} onNew={handleNewDispute} />
         <div className="p-4 space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -74,7 +74,7 @@ export default function DisputeStatusPage(): JSX.Element {
   // Error state
   if (isError) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="bg-bg-primary">
         <DisputeHistoryHeader onBack={handleBack} onNew={handleNewDispute} />
         <ErrorState
           title={t('errors.general')}
@@ -87,10 +87,10 @@ export default function DisputeStatusPage(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary pb-20">
+    <div className="bg-bg-primary pb-20">
       <DisputeHistoryHeader onBack={handleBack} onNew={handleNewDispute} />
 
-      <div className="p-4 space-y-3">
+      <div className="py-4 space-y-3">
         {!hasDisputes ? (
           <EmptyState
             icon={<FileText className="h-8 w-8" />}
@@ -126,7 +126,7 @@ function DisputeHistoryHeader({ onBack, onNew }: DisputeHistoryHeaderProps): JSX
             variant="ghost"
             size="sm"
             onClick={onBack}
-            leftIcon={<ArrowRight className="h-5 w-5 rtl:rotate-180" />}
+            leftIcon={<ArrowRight className="h-5 w-5 ltr:rotate-180" />}
           />
           <h1 className="text-xl font-bold text-text-primary">
             {t('disputes.history')}

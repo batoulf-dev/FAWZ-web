@@ -4,7 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { cn } from '@/core/utils/cn';
 
 interface LotteryAnimationProps {
@@ -116,7 +116,10 @@ export function LotteryAnimation({
   const digits = winningNumber.padStart(10, '0').split('').map(Number);
 
   // Support both userTickets array and legacy userNumber prop
-  const allUserTickets = userTickets ?? (userNumber ? [userNumber] : []);
+  const allUserTickets = useMemo(
+    () => userTickets ?? (userNumber ? [userNumber] : []),
+    [userTickets, userNumber]
+  );
 
   // Calculate best matching digits from any user ticket (lottery style)
   const calculateBestMatchingDigits = useCallback(() => {

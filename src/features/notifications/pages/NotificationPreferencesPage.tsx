@@ -69,7 +69,7 @@ export default function NotificationPreferencesPage(): JSX.Element {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="bg-bg-primary">
         <PreferencesHeader onBack={handleBack} />
         <div className="p-4 space-y-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -83,7 +83,7 @@ export default function NotificationPreferencesPage(): JSX.Element {
   // Error state
   if (isError) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="bg-bg-primary">
         <PreferencesHeader onBack={handleBack} />
         <ErrorState
           title={t('errors.general')}
@@ -96,10 +96,10 @@ export default function NotificationPreferencesPage(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="bg-bg-primary">
       <PreferencesHeader onBack={handleBack} />
 
-      <div className="p-4 space-y-4">
+      <div className="py-4 space-y-4">
         <p className="text-sm text-text-secondary">
           {t('settings.notifications')}
         </p>
@@ -150,7 +150,7 @@ function PreferencesHeader({ onBack }: PreferencesHeaderProps): JSX.Element {
           variant="ghost"
           size="sm"
           onClick={onBack}
-          leftIcon={<ArrowRight className="h-5 w-5 rtl:rotate-180" />}
+          leftIcon={<ArrowRight className="h-5 w-5 ltr:rotate-180" />}
         />
         <h1 className="text-xl font-bold text-text-primary">
           {t('notifications.preferences')}

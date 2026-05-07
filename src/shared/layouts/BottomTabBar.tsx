@@ -51,7 +51,7 @@ export function BottomTabBar(): JSX.Element {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 start-0 end-0 z-50 bg-bg-card shadow-[0_-4px_16px_rgba(0,0,0,0.08)] border-t border-border-subtle lg:hidden safe-area-inset-bottom">
+    <nav className="fixed bottom-0 inset-x-0 z-50 bg-bg-card shadow-[0_-4px_16px_rgba(0,0,0,0.08)] border-t border-border-subtle lg:hidden safe-area-inset-bottom">
       <div className="flex h-20">
         {tabs.map((tab) => {
           const isActive = tab.isActive(location.pathname);

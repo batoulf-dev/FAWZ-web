@@ -105,7 +105,7 @@ export function TicketStatsRow({
           {secondsRemaining > 0 ? (
             <>
               <p className="text-2xl font-bold text-text-primary font-mono tracking-wider">
-                {formatCountdown(secondsRemaining)}
+                {formatCountdown(secondsRemaining, lang)}
               </p>
               <p className="text-xs text-text-secondary mt-1">
                 {t('home.untilDraw')}

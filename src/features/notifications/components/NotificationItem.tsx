@@ -140,7 +140,7 @@ export function NotificationItem({
           <ChevronLeft
             className={cn(
               'shrink-0 h-5 w-5 text-text-muted',
-              'rtl:rotate-180',
+              'ltr:rotate-180',
             )}
           />
         )}

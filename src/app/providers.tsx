@@ -4,10 +4,8 @@
  */
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
 import { queryClient } from '@/config/queryClient';
-import { env } from '@/config/env';
 
 // Initialize i18n
 import '@/core/i18n';
@@ -47,9 +45,6 @@ export function Providers({ children }: ProvidersProps): JSX.Element {
           },
         }}
       />
-
-      {/* React Query Devtools (dev only) */}
-      {env.isDev && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 }

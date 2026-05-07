@@ -13,8 +13,9 @@ import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useSignUp } from '../services/auth.service';
-import { signUpRequestSchema, type SignUpFormData } from '../types/auth.types';
+import { signUpFormSchema, type SignUpFormData } from '../types/auth.types';
 import { isApiError } from '@/core/network/types/apiError';
+import { env } from '@/config/env';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage(): React.ReactElement {
@@ -33,14 +34,14 @@ export default function RegisterPage(): React.ReactElement {
     formState: { errors },
     setError,
   } = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpRequestSchema),
+    resolver: zodResolver(signUpFormSchema),
   });
 
   const onSubmit = async (data: SignUpFormData): Promise<void> => {
     try {
       await signUpMutation.mutateAsync({
         ...data,
-        app_id: 'fawz',
+        app_id: env.appId,
       });
 
       toast.success(t('registerSuccess'));

@@ -1,6 +1,9 @@
 /**
  * App Layout
  * Main application layout with sidebar and header
+ *
+ * Desktop: Fixed 240px sidebar + fluid main content (capped at 1280px)
+ * Mobile/Tablet: Bottom tab bar + slide-out drawer
  */
 
 import { Outlet } from 'react-router';
@@ -16,21 +19,26 @@ export function AppLayout(): JSX.Element {
 
   return (
     <div className="min-h-dvh bg-bg-main">
-      {/* Sidebar */}
+      {/* Sidebar - fixed 240px on desktop, drawer on mobile */}
       <Sidebar />
 
-      {/* Header */}
+      {/* Header - adjusts for sidebar width */}
       <Header />
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <main
         className={cn(
-          'pt-16 min-h-dvh transition-all duration-300 pb-20 lg:pb-0',
-          // Adjust for sidebar width
-          sidebarCollapsed ? 'lg:ps-20' : 'lg:ps-64',
+          'transition-all duration-300',
+          // Top padding for header on mobile/tablet only
+          'pt-16 lg:pt-0',
+          // Bottom padding for mobile tab bar, none on desktop
+          'pb-24 lg:pb-0',
+          // Adjust for sidebar width on desktop (240px expanded, 80px collapsed)
+          sidebarCollapsed ? 'lg:ps-20' : 'lg:ps-60',
         )}
       >
-        <div className="p-4 md:p-6 lg:p-8">
+        {/* Content container with max-width cap for desktop */}
+        <div className="max-w-screen-xl mx-auto p-4 md:p-6 lg:p-8">
           <Outlet />
         </div>
       </main>
@@ -38,7 +46,7 @@ export function AppLayout(): JSX.Element {
       {/* Offline Banner */}
       <OfflineBanner />
 
-      {/* Bottom Tab Bar (mobile only) */}
+      {/* Bottom Tab Bar (mobile/tablet only, hidden lg+) */}
       <BottomTabBar />
     </div>
   );

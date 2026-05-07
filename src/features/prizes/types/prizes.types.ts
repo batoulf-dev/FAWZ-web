@@ -17,6 +17,7 @@ export const PayoutStatusEnum = z.enum([
   'on_hold',
   'requires_review',
   'cancelled',
+  'held_cap_exceeded',
 ]);
 export type PayoutStatus = z.infer<typeof PayoutStatusEnum>;
 

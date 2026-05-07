@@ -64,7 +64,7 @@ function Sparkle({ x, y, delay }: { x: number; y: number; delay: number }) {
   return (
     <div
       className="absolute w-2 h-2 bg-brand-gold rounded-full animate-ping"
-      style={{
+      style={{ // dynamic — cannot use Tailwind for computed positions and delays
         left: `${x}%`,
         top: `${y}%`,
         animationDelay: `${delay}s`,
@@ -78,11 +78,11 @@ function GlowRing({ delay, size }: { delay: number; size: number }) {
   return (
     <div
       className="absolute inset-0 flex items-center justify-center pointer-events-none"
-      style={{ animationDelay: `${delay}s` }}
+      style={{ animationDelay: `${delay}s` }} // dynamic — cannot use Tailwind
     >
       <div
         className="rounded-full border-4 border-brand-gold/30 animate-ping"
-        style={{
+        style={{ // dynamic — cannot use Tailwind for computed sizes and delays
           width: `${size}px`,
           height: `${size}px`,
           animationDuration: '1.5s',

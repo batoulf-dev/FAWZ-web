@@ -65,7 +65,7 @@ export function ReferralTeaserCard({
           </div>
 
           {/* Arrow Chevron */}
-          <ChevronLeft className="h-5 w-5 text-primary flex-shrink-0 rtl:rotate-180" />
+          <ChevronLeft className="h-5 w-5 text-primary flex-shrink-0 ltr:rotate-180" />
         </div>
       </CardContent>
     </Card>

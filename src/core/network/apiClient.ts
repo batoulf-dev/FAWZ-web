@@ -31,7 +31,7 @@ export function getAccessToken(): string | null {
 
 // Create axios instance
 export const apiClient: AxiosInstance = axios.create({
-  baseURL: env.apiBaseUrl,
+  baseURL: env.apiUrl,
   timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
@@ -39,8 +39,8 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Mock token constant for dev testing
-const MOCK_DEV_TOKEN = 'mock-token-for-dev';
+// Mock token constant for dev testing - only used in development
+const MOCK_DEV_TOKEN = env.appEnv === 'development' ? 'mock-token-for-dev' : '';
 
 // Request interceptor - add auth token
 apiClient.interceptors.request.use(
@@ -91,7 +91,7 @@ apiClient.interceptors.response.use(
     if (status === 401 && refreshToken && accessToken !== MOCK_DEV_TOKEN && error.config) {
       try {
         const refreshResponse = await axios.post(
-          `${env.apiBaseUrl}/auth/refresh`,
+          `${env.apiUrl}/auth/refresh`,
           { refresh_token: refreshToken },
         );
 

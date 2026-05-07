@@ -72,7 +72,7 @@ export default function ForgotPasswordPage(): React.ReactElement {
         onClick={() => navigate(-1)}
         className="mb-4 flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors"
       >
-        <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+        <ArrowRight className="h-4 w-4 ltr:rotate-180" />
         {t('common:back')}
       </button>
 

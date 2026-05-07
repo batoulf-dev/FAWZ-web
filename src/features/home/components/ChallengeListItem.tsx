@@ -4,7 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
-import { Target, Gift, Clock, CheckCircle2, ChevronLeft } from 'lucide-react';
+import { Target, Gift, Clock, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Skeleton } from '@/shared/components/Skeleton';
@@ -13,12 +13,10 @@ import type { HomeChallengeItem } from '../types/home.types';
 
 interface ChallengeListItemProps {
   challenge: HomeChallengeItem;
-  onClick?: () => void;
 }
 
 export function ChallengeListItem({
   challenge,
-  onClick,
 }: ChallengeListItemProps): React.ReactElement {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
@@ -44,8 +42,7 @@ export function ChallengeListItem({
   if (challenge.isCompleted) {
     return (
       <Card
-        className="bg-success/5 border-success/20 cursor-pointer hover:bg-success/10 transition-colors"
-        onClick={onClick}
+        className="bg-success/5 border-success/20"
       >
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
@@ -72,10 +69,7 @@ export function ChallengeListItem({
   }
 
   return (
-    <Card
-      className="cursor-pointer hover:shadow-md transition-all"
-      onClick={onClick}
-    >
+    <Card>
       <CardContent className="p-4">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
@@ -95,7 +89,6 @@ export function ChallengeListItem({
               </div>
             </div>
           </div>
-          <ChevronLeft className="h-5 w-5 text-text-muted flex-shrink-0 rtl:rotate-180" />
         </div>
 
         {/* Progress Bar */}
@@ -111,7 +104,7 @@ export function ChallengeListItem({
           <div className="h-2 bg-surface-secondary rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-brand-primary to-brand-gold rounded-full transition-all duration-500"
-              style={{ width: `${progressPercent}%` }}
+              style={{ width: `${progressPercent}%` }} // dynamic — cannot use Tailwind
             />
           </div>
         </div>

@@ -164,15 +164,15 @@ export default function WinnerSharePage(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen bg-surface-primary">
-      <div className="p-4 space-y-6">
+    <div className="bg-surface-primary">
+      <div className="py-4 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary"
           >
-            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             {t('common:back')}
           </button>
         </div>

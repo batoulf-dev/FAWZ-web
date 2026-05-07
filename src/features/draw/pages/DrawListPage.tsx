@@ -71,7 +71,7 @@ function DrawRow({
               </Badge>
             )}
           </div>
-          <ChevronLeft className="h-5 w-5 text-text-muted rtl:rotate-180" />
+          <ChevronLeft className="h-5 w-5 text-text-muted ltr:rotate-180" />
         </div>
 
         <div className="flex items-center gap-2 text-text-secondary mb-2">
@@ -220,7 +220,7 @@ export default function DrawListPage(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-primary">
+      <div className="bg-surface-primary">
         <div className="p-4">
           <h1 className="text-xl font-bold text-text-primary mb-4">
             {t('draw.results')}
@@ -246,10 +246,10 @@ export default function DrawListPage(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen bg-surface-primary">
+    <div className="bg-surface-primary">
       {!isOnline && <OfflineBanner />}
 
-      <div className="p-4">
+      <div className="py-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold text-text-primary">
@@ -271,7 +271,7 @@ export default function DrawListPage(): React.ReactElement {
             description={t('draw.noDrawsDescription')}
           />
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 min-[1000px]:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
             {draws.map((draw) => {
               const userPrize = userWinsMap.get(draw.draw_id);
               const userWon = userPrize !== undefined && userPrize > 0;

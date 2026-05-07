@@ -15,7 +15,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'https://dev.iqarx.com',
+        target: 'https://fawz-sandbox.dev.iqarx.com/api/v0',
         changeOrigin: true,
         secure: true,
       },

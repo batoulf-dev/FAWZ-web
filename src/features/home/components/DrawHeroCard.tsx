@@ -69,16 +69,15 @@ export function DrawHeroCard({
     if (isLive) {
       navigate('/draws/live');
     } else {
-      // DEV ONLY: Always navigate to past draws list (SCR-003) when clicking the hero card
-      // This is for browsing results, NOT the next/scheduled draw
-      navigate('/draws');
+      // Navigate to simulation page to replay the last draw
+      navigate('/draws/simulation');
     }
   };
 
   if (isLoading) {
     return (
       <Card className="bg-gradient-to-br from-zinc-950 via-zinc-900 to-black border border-white/10 shadow-2xl shadow-black/50">
-        <CardContent className="p-5 min-h-[200px] flex flex-col justify-center">
+        <CardContent className="p-5 min-h-[200px] lg:min-h-[160px] flex flex-col justify-center">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <Skeleton className="h-12 w-20 mb-2 bg-zinc-700" />
@@ -122,17 +121,17 @@ export function DrawHeroCard({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.8)_1px,transparent_1px)] bg-[length:24px_24px]" />
       </div>
 
-      <CardContent className="p-5 relative min-h-[200px] flex flex-col justify-center">
+      <CardContent className="p-5 relative min-h-[200px] lg:min-h-[160px] flex flex-col justify-center">
         <div className="flex items-center justify-between gap-4">
-          {/* Left: Ticket Count */}
+          {/* Left: Ticket Count - centered on desktop */}
           <div
-            className="flex-1"
+            className="flex-1 lg:text-center lg:flex lg:flex-col lg:items-center"
             onClick={(e) => {
               e.stopPropagation();
               onTicketsClick?.();
             }}
           >
-            <div className="flex items-baseline gap-2 mb-1">
+            <div className="flex items-baseline gap-2 mb-1 lg:justify-center">
               <span className="text-5xl font-black text-white tracking-tight drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]">
                 {formatNumber(activeTickets, lang)}
               </span>
@@ -151,9 +150,9 @@ export function DrawHeroCard({
           {/* Vertical Divider */}
           <div className="w-px h-24 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
 
-          {/* Right: Countdown/Live Status */}
-          <div className="flex-1 text-end">
-            <div className="inline-flex items-center gap-1.5 mb-2 justify-end">
+          {/* Right: Countdown/Live Status - centered on desktop */}
+          <div className="flex-1 text-end lg:text-center lg:flex lg:flex-col lg:items-center">
+            <div className="inline-flex items-center gap-1.5 mb-2 justify-end lg:justify-center">
               <Clock className="h-4 w-4 text-purple-400" />
               <p className="text-purple-400 text-xs font-medium uppercase tracking-wide">
                 {drawType === 'weekly' ? t('draw.weeklyDraw') : t('draw.monthlyDraw')}
@@ -171,8 +170,8 @@ export function DrawHeroCard({
               </>
             ) : (
               <>
-                <p className="text-2xl font-bold text-white font-mono tracking-wider mb-1 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-                  {formatCountdown(secondsRemaining)}
+                <p className="text-2xl font-bold text-white font-mono tracking-wider mb-1 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] whitespace-nowrap">
+                  {formatCountdown(secondsRemaining, lang)}
                 </p>
                 {nextDrawDate && (
                   <p className="text-zinc-400 text-sm">

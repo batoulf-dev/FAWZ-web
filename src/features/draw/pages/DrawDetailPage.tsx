@@ -133,7 +133,7 @@ function PrizeConfetti({ isActive }: { isActive: boolean }) {
         <div
           key={p.id}
           className="absolute animate-[prizeConfetti_2s_ease-out_forwards]"
-          style={{
+          style={{ // dynamic — cannot use Tailwind for computed confetti particle animations
             left: `${p.x}%`,
             top: '-10px',
             width: `${p.size}px`,
@@ -402,7 +402,7 @@ export default function DrawDetailPage(): React.ReactElement {
       ];
 
   return (
-    <div className="min-h-screen bg-surface-primary">
+    <div className="bg-surface-primary">
       {!isOnline && <OfflineBanner />}
 
       {/* Result Overlay - shows actual comparison result */}
@@ -416,14 +416,14 @@ export default function DrawDetailPage(): React.ReactElement {
         onClose={() => setShowResultOverlay(false)}
       />
 
-      <div className="p-4 space-y-6">
+      <div className="py-4 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary"
           >
-            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             {t('common:back')}
           </button>
         </div>

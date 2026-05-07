@@ -13,6 +13,8 @@ import { Input } from '@/shared/components/Input';
 import { otpVerificationSchema, type OtpVerificationData } from '@/core/utils/validators';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useAuthStore } from '@/stores/auth.store';
+import { env } from '@/config/env';
+import toast from 'react-hot-toast';
 
 const RESEND_COOLDOWN = 60; // seconds
 
@@ -20,7 +22,6 @@ export default function OtpPage(): JSX.Element {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
 
   const phone = (location.state as { phone?: string })?.phone;
   const [isLoading, setIsLoading] = useState(false);
@@ -53,33 +54,22 @@ export default function OtpPage(): JSX.Element {
     return <Navigate to="/login" replace />;
   }
 
-  const onSubmit = async (data: OtpVerificationData): Promise<void> => {
+  const onSubmit = async (_data: OtpVerificationData): Promise<void> => {
     setIsLoading(true);
     try {
-      // TODO: Call API to verify OTP
-      // eslint-disable-next-line no-console
-      console.log('Verifying OTP:', data);
+      // TODO: Implement phone OTP verification API when available
+      // For now, this feature is only available in development mode
+      if (env.appEnv !== 'development') {
+        toast.error(t('errors.featureNotAvailable'));
+        return;
+      }
 
-      // Mock successful auth
-      setAuth(
-        {
-          id: '1',
-          phone: data.phone,
-          name: 'Test User',
-          is_verified: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          access_token: 'mock_access_token',
-          token_type: 'Bearer',
-          expires_in: 3600,
-        },
-      );
-
+      // Development only: Use mock login for testing
+      const mockLogin = useAuthStore.getState().mockLogin;
+      mockLogin();
       navigate('/');
-    } catch (error) {
-      console.error('OTP error:', error);
+    } catch {
+      toast.error(t('errors.verificationFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -89,12 +79,16 @@ export default function OtpPage(): JSX.Element {
     if (resendCooldown > 0) return;
 
     try {
-      // TODO: Call API to resend OTP
-      // eslint-disable-next-line no-console
-      console.log('Resending OTP to:', phone);
+      // TODO: Implement resend OTP API when available
+      if (env.appEnv !== 'development') {
+        toast.error(t('errors.featureNotAvailable'));
+        return;
+      }
+      // Development only: simulate resend
       setResendCooldown(RESEND_COOLDOWN);
-    } catch (error) {
-      console.error('Resend error:', error);
+      toast.success(t('auth.otpResent'));
+    } catch {
+      toast.error(t('errors.resendFailed'));
     }
   };
 
@@ -104,7 +98,7 @@ export default function OtpPage(): JSX.Element {
         onClick={() => navigate(-1)}
         className="mb-4 flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors"
       >
-        <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+        <ArrowRight className="h-4 w-4 ltr:rotate-180" />
         {t('common.back')}
       </button>
 

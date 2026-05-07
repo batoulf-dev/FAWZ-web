@@ -72,7 +72,7 @@ function ChallengeCard({
           <div className="h-2 bg-surface-secondary rounded-full overflow-hidden">
             <div
               className="h-full bg-brand-primary rounded-full transition-all"
-              style={{ width: `${progressPercent}%` }}
+              style={{ width: `${progressPercent}%` }} // dynamic — cannot use Tailwind
             />
           </div>
         </div>
@@ -96,28 +96,31 @@ function DrawCountdown({ drawDate, jackpot, drawType }: {
   jackpot: number;
   drawType: string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState('');
+  const lang = i18n.language;
 
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
       const draw = new Date(drawDate);
-      const diff = draw.getTime() - now.getTime();
+      const diffMs = draw.getTime() - now.getTime();
 
-      if (diff <= 0) {
+      if (diffMs <= 0) {
         setCountdown(t('draw.live'));
         return;
       }
 
-      setCountdown(formatCountdown(diff));
+      // Convert milliseconds to seconds
+      const diffSeconds = Math.floor(diffMs / 1000);
+      setCountdown(formatCountdown(diffSeconds, lang));
     };
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [drawDate, t]);
+  }, [drawDate, t, lang]);
 
   return (
     <Card
@@ -245,10 +248,10 @@ export default function DashboardPage(): React.ReactElement {
   const isNewUser = entryCount === 0 && !entrySummary?.lifetime_count;
 
   return (
-    <div className="min-h-screen bg-surface-primary">
+    <div className="bg-surface-primary">
       {!isOnline && <OfflineBanner />}
 
-      <div className="p-4 space-y-6">
+      <div className="py-4 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold text-text-primary">
@@ -334,7 +337,7 @@ export default function DashboardPage(): React.ReactElement {
                 className="text-sm text-brand-primary flex items-center gap-1"
               >
                 {t('common.viewAll')}
-                <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+                <ChevronLeft className="h-4 w-4 ltr:rotate-180" />
               </Link>
             </div>
             <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4">

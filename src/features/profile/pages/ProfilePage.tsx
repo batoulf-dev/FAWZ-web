@@ -48,7 +48,7 @@ export default function ProfilePage(): JSX.Element {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="bg-bg-primary">
         <ProfileHeader />
         <div className="p-4 space-y-4">
           <ProfileHeaderSkeleton />
@@ -61,7 +61,7 @@ export default function ProfilePage(): JSX.Element {
   // Error state
   if (isError) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="bg-bg-primary">
         <ProfileHeader />
         <ErrorState
           title={t('errors.general')}
@@ -75,7 +75,7 @@ export default function ProfilePage(): JSX.Element {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="bg-bg-primary">
         <ProfileHeader />
         <ErrorState
           title={t('errors.notFound')}
@@ -110,10 +110,10 @@ export default function ProfilePage(): JSX.Element {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary pb-20">
+    <div className="bg-bg-primary pb-20">
       <ProfileHeader />
 
-      <div className="p-4 space-y-4">
+      <div className="py-4 space-y-4">
         {/* Profile Card */}
         <Card variant="elevated" className="relative overflow-hidden">
           {/* Background decoration */}
@@ -284,7 +284,7 @@ function SettingsLink({
         {icon}
         <span className="text-sm text-text-primary">{label}</span>
       </div>
-      <ChevronLeft className="h-5 w-5 text-text-muted rtl:rotate-180" />
+      <ChevronLeft className="h-5 w-5 text-text-muted ltr:rotate-180" />
     </button>
   );
 }

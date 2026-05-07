@@ -36,33 +36,33 @@ function EntrySummaryCard({
 
   return (
     <Card className="bg-gradient-to-r from-brand-gold/10 to-brand-primary/10">
-      <CardContent className="p-4">
+      <CardContent className="p-4 lg:p-6">
         <div className="grid grid-cols-2 gap-4">
           {/* This Week */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 lg:justify-center">
             <div className="p-2.5 bg-brand-gold/10 rounded-xl">
               <Calendar className="h-5 w-5 text-brand-gold" />
             </div>
-            <div>
-              <p className="text-xl font-bold text-text-primary">
+            <div className="lg:text-center">
+              <p className="text-xl lg:text-2xl font-bold text-text-primary">
                 {formatNumber(weekCount, lang)}
               </p>
-              <p className="text-xs text-text-secondary">
+              <p className="text-xs lg:text-sm text-text-secondary">
                 {t('entries.thisWeek')}
               </p>
             </div>
           </div>
 
           {/* Active Tickets */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 lg:justify-center">
             <div className="p-2.5 bg-brand-primary/10 rounded-xl">
               <TicketCheck className="h-5 w-5 text-brand-primary" />
             </div>
-            <div>
-              <p className="text-xl font-bold text-text-primary">
+            <div className="lg:text-center">
+              <p className="text-xl lg:text-2xl font-bold text-text-primary">
                 {formatNumber(activeCount, lang)}
               </p>
-              <p className="text-xs text-text-secondary">
+              <p className="text-xs lg:text-sm text-text-secondary">
                 {t('entries.activeTickets')}
               </p>
             </div>
@@ -237,7 +237,7 @@ export default function MyNumbersPage(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-primary">
+      <div className="bg-surface-primary">
         <div className="p-4">
           <h1 className="text-xl font-bold text-text-primary mb-4">
             {t('tickets.myTickets')}
@@ -260,10 +260,10 @@ export default function MyNumbersPage(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen bg-surface-primary">
+    <div className="bg-surface-primary">
       {!isOnline && <OfflineBanner />}
 
-      <div className="p-4 space-y-4">
+      <div className="py-4 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-text-primary">
@@ -293,7 +293,7 @@ export default function MyNumbersPage(): React.ReactElement {
             onAction={() => navigate('/challenges')}
           />
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 min-[1000px]:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
             {entries.map((entry) => (
               <EntryRow
                 key={entry.fawz_entry_id}

@@ -79,6 +79,11 @@ export default function LoginPage(): React.ReactElement {
   return (
     <div>
       <div className="mb-8 text-center">
+        <img
+          src="/fawz-logo.png"
+          alt="Fawz"
+          className="h-16 w-auto mx-auto mb-6"
+        />
         <h1 className="text-2xl font-bold text-text-primary mb-2">
           {t('welcomeBack')}
         </h1>

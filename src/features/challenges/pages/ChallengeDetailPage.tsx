@@ -53,7 +53,7 @@ function ProgressBarWithCheckpoints({
       <div className="relative h-4 bg-surface-secondary rounded-full overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-brand-primary to-brand-gold rounded-full transition-all duration-700"
-          style={{ width: `${progressPercent}%` }}
+          style={{ width: `${progressPercent}%` }} // dynamic — cannot use Tailwind
         />
 
         {/* Checkpoint Markers */}
@@ -81,7 +81,7 @@ function ProgressBarWithCheckpoints({
                       : 'bg-surface-tertiary text-text-muted'
                 }
               `}
-              style={{ left: `calc(${position}% - 12px)` }}
+              style={{ left: `calc(${position}% - 12px)` }} // dynamic — cannot use Tailwind
             >
               {isClaimed ? (
                 <CheckCircle2 className="h-4 w-4" />
@@ -196,17 +196,17 @@ export default function ChallengeDetailPage(): React.ReactElement {
   const claimedCheckpoints = progress?.checkpoints_claimed ?? [];
 
   return (
-    <div className="min-h-screen bg-surface-primary">
+    <div className="bg-surface-primary">
       {!isOnline && <OfflineBanner />}
 
-      <div className="p-4 space-y-6">
+      <div className="py-4 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary"
           >
-            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+            <ArrowRight className="h-4 w-4 ltr:rotate-180" />
             {t('common:back')}
           </button>
           {isCompleted && (

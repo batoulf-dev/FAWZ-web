@@ -47,7 +47,7 @@ import type {
 // Generated once at module import, regenerates on every page load
 // ===========================================
 
-/** DEV ONLY: Module load timestamp - used for 10-second finalization timer */
+/** DEV ONLY: Module load timestamp - used for 12-second finalization timer */
 export const MODULE_LOAD_TIME = Date.now();
 
 /** DEV ONLY: Helper to generate random int in range [min, max] */
@@ -82,19 +82,29 @@ export interface SessionSeed {
   ticketCount: number;
   winningNumbers: [string, string, string];
   jackpot: number;
+  entryPoolSize: number; // Session-stable entry pool size
   pastDrawCount: number;
   weeklySpark: { current: number; target: number };
   pastDrawWinIndices: number[]; // Which past draws the user won in (0-2 of them)
   pastDrawWinningNumbers: Array<[string, string, string]>; // Winning numbers for each past draw
-  moduleLoadTime: number; // Timestamp when module loaded (for 10s timer)
+  moduleLoadTime: number; // Timestamp when module loaded (for 12s timer)
+}
+
+/** DEV ONLY: Get max possible unique transaction days based on current day of week */
+function getMaxWeeklySparkDays(): number {
+  const today = new Date().getDay();
+  // Convert to Mon=0, Sun=6 (matching WeeklySparkCard logic)
+  const currentDayIndex = today === 0 ? 6 : today - 1;
+  // Max possible = days elapsed this week (including today)
+  return currentDayIndex + 1;
 }
 
 /** DEV ONLY: Generate session seed - runs once when module loads */
 function generateSessionSeed(): SessionSeed {
   const pastDrawCount = randomInt(3, 8);
 
-  // Randomly assign 0-2 past draws as having user wins
-  const numWins = randomInt(0, 2);
+  // Randomly assign 1-4 past draws as having user wins
+  const numWins = randomInt(1, Math.min(4, pastDrawCount));
   const pastDrawWinIndices: number[] = [];
   while (pastDrawWinIndices.length < numWins && pastDrawWinIndices.length < pastDrawCount) {
     const idx = randomInt(0, pastDrawCount - 1);
@@ -113,16 +123,22 @@ function generateSessionSeed(): SessionSeed {
     ]);
   }
 
+  // Weekly spark: random unique transaction days, bounded by current day of week
+  // Can't have more unique days than days elapsed this week
+  const maxSparkDays = getMaxWeeklySparkDays();
+  const currentSparkDays = randomInt(0, maxSparkDays);
+
   return {
-    ticketCount: randomInt(2, 12), // DEV ONLY: 2-12 tickets per spec
+    ticketCount: randomInt(2, 150), // DEV ONLY: 2-150 tickets per spec
     winningNumbers: [
       generateTenDigitNumber(),
       generateTenDigitNumber(),
       generateTenDigitNumber(),
     ],
-    jackpot: randomInt(50_000_000, 300_000_000), // DEV ONLY: 50M-300M IQD
+    jackpot: 10_000_000, // DEV ONLY: Fixed 10M IQD jackpot
+    entryPoolSize: randomInt(100_000, 500_000), // DEV ONLY: Session-stable pool size
     pastDrawCount,
-    weeklySpark: { current: randomInt(1, 7), target: 5 },
+    weeklySpark: { current: currentSparkDays, target: 5 },
     pastDrawWinIndices,
     pastDrawWinningNumbers,
     moduleLoadTime: MODULE_LOAD_TIME, // Use shared module load time
@@ -225,32 +241,44 @@ function generateActiveEntries(): FawzEntry[] {
 export const sessionActiveEntries: FawzEntry[] = generateActiveEntries();
 
 // ===========================================
-// DEV ONLY - Next Draw (Upcoming - not finalized)
-// Becomes finalized after 10 seconds from MODULE_LOAD_TIME
+// DEV ONLY - Next Draw (Upcoming - scheduled weekly)
 // ===========================================
 
-/** DEV ONLY: Get the draw time (10 seconds from module load) */
+/** DEV ONLY: Get the next Thursday at 9 PM */
+function getNextThursday9PM(): Date {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 4 = Thursday
+  const daysUntilThursday = (4 - dayOfWeek + 7) % 7 || 7; // If today is Thursday, get next Thursday
+  const nextThursday = new Date(now);
+  nextThursday.setDate(now.getDate() + daysUntilThursday);
+  nextThursday.setHours(21, 0, 0, 0); // 9 PM
+  return nextThursday;
+}
+
+/** DEV ONLY: Get the draw time
+ * Set DEV_DRAW_SECONDS environment variable or edit this value to test draw countdown
+ * Default: 15 seconds from module load for quick testing
+ */
+const DEV_DRAW_DELAY_MS = 15 * 1000; // 15 seconds for testing
+
 export function getNextDrawTime(): number {
-  return MODULE_LOAD_TIME + 10000;
+  // DEV ONLY: Return draw time as MODULE_LOAD_TIME + delay for testing
+  return MODULE_LOAD_TIME + DEV_DRAW_DELAY_MS;
 }
 
-/** DEV ONLY: Check if the draw is finalized (10 seconds elapsed) */
-export function isDrawFinalized(): boolean {
-  return Date.now() >= getNextDrawTime();
-}
-
-/** DEV ONLY: Next draw - becomes finalized after 10 seconds */
+/** DEV ONLY: Next draw - scheduled for next Thursday */
+const nextDrawDate = getNextThursday9PM();
 export const sessionNextDraw: Draw = {
   draw_id: 'next-draw',
   tenant_id: '770e8400-e29b-41d4-a716-446655440001',
-  draw_date: new Date(MODULE_LOAD_TIME + 10000).toISOString(), // DEV ONLY: Full ISO for countdown
+  draw_date: nextDrawDate.toISOString(),
   draw_time: '21:00:00',
   draw_type: 'weekly',
   draw_number: 99,
-  status: 'scheduled', // Will become 'finalized' after 10s in handlers
-  entry_cutoff_at: new Date(MODULE_LOAD_TIME + 10000).toISOString(),
-  scheduled_broadcast_at: new Date(MODULE_LOAD_TIME + 10000).toISOString(),
-  entry_pool_size: randomInt(100000, 500000),
+  status: 'scheduled',
+  entry_cutoff_at: nextDrawDate.toISOString(),
+  scheduled_broadcast_at: nextDrawDate.toISOString(),
+  entry_pool_size: SESSION.entryPoolSize, // DEV ONLY: Use session-stable value
   entry_pool_snapshot_at: undefined,
   broadcast_started_at: undefined,
   finalized_at: undefined,
@@ -290,12 +318,15 @@ function generatePastDraws(): Draw[] {
     const drawDate = new Date(SESSION.moduleLoadTime - daysAgo * 24 * 60 * 60 * 1000);
     const winningNumbers = SESSION.pastDrawWinningNumbers[i];
 
+    // Every 4th draw is monthly (for testing both cap values)
+    const isMonthly = i > 0 && i % 4 === 0;
+
     draws.push({
       draw_id: `past-draw-${i.toString().padStart(3, '0')}`,
       tenant_id: '770e8400-e29b-41d4-a716-446655440001',
       draw_date: drawDate.toISOString().split('T')[0],
       draw_time: '21:00:00',
-      draw_type: 'weekly',
+      draw_type: isMonthly ? 'monthly' : 'weekly',
       draw_number: 98 - i,
       status: 'finalized',
       entry_cutoff_at: drawDate.toISOString(),
@@ -312,7 +343,7 @@ function generatePastDraws(): Draw[] {
       prize_tier_last_5_iqd: 250000,
       prize_tier_last_7_iqd: 2500000,
       prize_tier_last_10_iqd: 25000000,
-      jackpot_amount_iqd: 10000000, // DEV ONLY: Fixed 10M IQD weekly jackpot
+      jackpot_amount_iqd: isMonthly ? 50000000 : 10000000, // Monthly: 50M, Weekly: 10M IQD
       jackpot_rollover_iqd: 0,
       jackpot_claimed: Math.random() > 0.8, // 20% chance of jackpot claimed
       jackpot_winners_count: Math.random() > 0.8 ? randomInt(1, 2) : 0,
@@ -338,43 +369,76 @@ export const sessionPastDraws: Draw[] = generatePastDraws();
 function generateWonEntries(): FawzEntry[] {
   const entries: FawzEntry[] = [];
 
+  // Weighted distribution for digit matches (jackpots are rare)
+  // 3-4 digits: 35%, 5-6 digits: 20%, 7-8-9 digits: 8%, jackpot: 2%
+  const digitWeights: { digits: number; weight: number }[] = [
+    { digits: 3, weight: 17.5 },
+    { digits: 4, weight: 17.5 },
+    { digits: 5, weight: 10 },
+    { digits: 6, weight: 10 },
+    { digits: 7, weight: 2.7 },
+    { digits: 8, weight: 2.7 },
+    { digits: 9, weight: 2.6 },
+    { digits: 10, weight: 2 }, // Jackpot - rare but possible
+  ];
+  const totalWeight = digitWeights.reduce((sum, d) => sum + d.weight, 0);
+
+  const getWeightedDigits = (): number => {
+    const rand = Math.random() * totalWeight;
+    let cumulative = 0;
+    for (const { digits, weight } of digitWeights) {
+      cumulative += weight;
+      if (rand < cumulative) return digits;
+    }
+    return 3; // fallback
+  };
+
+  // Prize tiers: 3-4 digits, 5-6 digits, 7-8-9 digits, 10 digits (jackpot)
+  const getPrizeForDigits = (digits: number): number => {
+    if (digits >= 10) return 25000000; // Jackpot
+    if (digits >= 7) return 2500000;   // 7-8-9 digits
+    if (digits >= 5) return 250000;    // 5-6 digits
+    return 25000;                       // 3-4 digits
+  };
+
   for (const drawIndex of SESSION.pastDrawWinIndices) {
     const draw = sessionPastDraws[drawIndex];
     if (!draw) continue;
 
-    // Create a winning entry that matches one of the winning numbers
-    const winningNumber = SESSION.pastDrawWinningNumbers[drawIndex][0];
-    const digitsMatched = randomInt(3, 5) as 3 | 5; // Last 3 or Last 5 for variety
-    const matchSuffix = winningNumber.slice(-digitsMatched);
-    const entryNumber = generateTenDigitNumber().slice(0, -digitsMatched) + matchSuffix;
-    const trailing = computeTrailingDigits(entryNumber);
+    // Generate winning entries based on user's ticket count (no artificial cap)
+    // Random percentage of tickets win (1-25% of their tickets for this draw)
+    const winPercentage = randomInt(1, 25) / 100;
+    const numWinningTickets = Math.max(1, Math.floor(SESSION.ticketCount * winPercentage));
+    const winningNumbers = SESSION.pastDrawWinningNumbers[drawIndex];
 
-    const prizeByDigits: Record<number, number> = {
-      3: 25000,
-      5: 250000,
-      7: 2500000,
-      10: 25000000,
-    };
+    for (let ticketIdx = 0; ticketIdx < numWinningTickets; ticketIdx++) {
+      // Pick a random winning number from the 3 available
+      const winningNumber = winningNumbers[randomInt(0, 2)];
+      const digitsMatched = getWeightedDigits();
+      const matchSuffix = winningNumber.slice(-digitsMatched);
+      const entryNumber = generateTenDigitNumber().slice(0, -digitsMatched) + matchSuffix;
+      const trailing = computeTrailingDigits(entryNumber);
 
-    entries.push({
-      fawz_entry_id: `session-won-entry-${drawIndex.toString().padStart(3, '0')}`,
-      tenant_id: '770e8400-e29b-41d4-a716-446655440001',
-      consumer_user_id: mockUser.id,
-      entry_number: entryNumber,
-      source: 'transaction',
-      draw_week: getISOWeek(new Date(draw.draw_date)),
-      ...trailing,
-      transaction_amount_iqd: randomInt(10000, 200000),
-      transaction_channel: 'pos',
-      multiplier_applied: 1,
-      is_valid: true,
-      outcome: 'won',
-      outcome_draw_id: draw.draw_id,
-      digits_matched: digitsMatched,
-      prize_iqd: prizeByDigits[digitsMatched],
-      created_at: new Date(new Date(draw.draw_date).getTime() - randomInt(1, 7) * 24 * 60 * 60 * 1000).toISOString(),
-      updated_at: draw.finalized_at ?? new Date().toISOString(),
-    });
+      entries.push({
+        fawz_entry_id: `session-won-entry-${drawIndex.toString().padStart(3, '0')}-${ticketIdx}`,
+        tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+        consumer_user_id: mockUser.id,
+        entry_number: entryNumber,
+        source: 'transaction',
+        draw_week: getISOWeek(new Date(draw.draw_date)),
+        ...trailing,
+        transaction_amount_iqd: randomInt(10000, 200000),
+        transaction_channel: 'pos',
+        multiplier_applied: 1,
+        is_valid: true,
+        outcome: 'won',
+        outcome_draw_id: draw.draw_id,
+        digits_matched: digitsMatched,
+        prize_iqd: getPrizeForDigits(digitsMatched),
+        created_at: new Date(new Date(draw.draw_date).getTime() - randomInt(1, 7) * 24 * 60 * 60 * 1000).toISOString(),
+        updated_at: draw.finalized_at ?? new Date().toISOString(),
+      });
+    }
   }
 
   return entries;
@@ -382,6 +446,107 @@ function generateWonEntries(): FawzEntry[] {
 
 /** DEV ONLY: Session-based won entries from past draws */
 export const sessionWonEntries: FawzEntry[] = generateWonEntries();
+
+// ===========================================
+// DEV ONLY - Session Prize Payouts with Cap Logic
+// ===========================================
+
+/** Payout caps per draw type */
+const PAYOUT_CAPS = {
+  weekly: 1000000,   // 1M IQD
+  monthly: 5000000,  // 5M IQD
+} as const;
+
+/** Get prize tier from digits matched */
+function getPrizeTierFromDigits(digits: number): 'last_3' | 'last_5' | 'last_7' | 'last_10' {
+  if (digits >= 10) return 'last_10';
+  if (digits >= 7) return 'last_7';
+  if (digits >= 5) return 'last_5';
+  return 'last_3';
+}
+
+/** DEV ONLY: Generate prize payouts from won entries with payout cap logic */
+function generateSessionPrizePayouts(): PrizePayout[] {
+  const payouts: PrizePayout[] = [];
+
+  // Group won entries by draw
+  const entriesByDraw = new Map<string, FawzEntry[]>();
+  for (const entry of sessionWonEntries) {
+    if (entry.outcome_draw_id) {
+      const existing = entriesByDraw.get(entry.outcome_draw_id) || [];
+      existing.push(entry);
+      entriesByDraw.set(entry.outcome_draw_id, existing);
+    }
+  }
+
+  // Process each draw's entries with cap logic
+  for (const [drawId, entries] of entriesByDraw) {
+    const draw = sessionPastDraws.find(d => d.draw_id === drawId);
+    if (!draw) continue;
+
+    const cap = PAYOUT_CAPS[draw.draw_type as keyof typeof PAYOUT_CAPS] || PAYOUT_CAPS.weekly;
+    let totalPaidOut = 0;
+
+    // Sort entries by prize amount (highest first) to pay bigger prizes first
+    const sortedEntries = [...entries].sort((a, b) => (b.prize_iqd || 0) - (a.prize_iqd || 0));
+
+    for (let i = 0; i < sortedEntries.length; i++) {
+      const entry = sortedEntries[i];
+      const prizeAmount = entry.prize_iqd || 0;
+      const wouldExceedCap = totalPaidOut + prizeAmount > cap;
+      const remainingCap = cap - totalPaidOut;
+
+      // Determine payout status and actual amount
+      let payoutStatus: 'completed' | 'held_cap_exceeded' | 'pending';
+      let isOnHold = false;
+      let holdReason: string | undefined;
+
+      if (wouldExceedCap && totalPaidOut >= cap) {
+        // Fully over cap - entire prize is held
+        payoutStatus = 'held_cap_exceeded';
+        isOnHold = true;
+        holdReason = `Payout cap exceeded (${draw.draw_type}: ${cap.toLocaleString()} IQD)`;
+      } else if (wouldExceedCap) {
+        // Partially over cap - mark as held, full amount recorded
+        payoutStatus = 'held_cap_exceeded';
+        isOnHold = true;
+        holdReason = `Partial cap exceeded (${draw.draw_type}: ${cap.toLocaleString()} IQD, paid: ${remainingCap.toLocaleString()} IQD)`;
+        totalPaidOut = cap;
+      } else {
+        // Under cap - full payout
+        payoutStatus = 'completed';
+        totalPaidOut += prizeAmount;
+      }
+
+      payouts.push({
+        prize_payout_id: `session-payout-${drawId}-${i}`,
+        tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+        draw_winner_id: `winner-${entry.fawz_entry_id}`,
+        consumer_user_id: entry.consumer_user_id,
+        prize_amount_iqd: prizeAmount, // Original prize amount
+        prize_tier: getPrizeTierFromDigits(entry.digits_matched || 3),
+        draw_id: drawId,
+        draw_date: draw.draw_date,
+        payout_status: payoutStatus,
+        payout_method: payoutStatus === 'completed' ? 'wallet_credit' : undefined,
+        payout_completed_at: payoutStatus === 'completed' ? draw.finalized_at : undefined,
+        retry_count: 0,
+        max_retries: 3,
+        requires_compliance_review: (entry.digits_matched || 0) >= 7,
+        is_on_hold: isOnHold,
+        hold_reason: holdReason,
+        held_at: isOnHold ? draw.finalized_at : undefined,
+        created_at: draw.finalized_at || new Date().toISOString(),
+        updated_at: draw.finalized_at || new Date().toISOString(),
+      });
+    }
+  }
+
+  return payouts;
+}
+
+/** DEV ONLY: Session-based prize payouts with cap logic applied */
+export const sessionPrizePayouts: PrizePayout[] = generateSessionPrizePayouts();
 
 // ===========================================
 // Draw Fixtures
@@ -1320,20 +1485,77 @@ export const mockChallenge: Challenge = {
 export const mockChallengeList: ChallengeListResponse = {
   challenges_list: [
     mockChallenge,
+    // Onboarding challenges
     {
       ...mockChallenge,
       challenge_id: 'cc0e8400-e29b-41d4-a716-446655440002',
       challenge_type: 'onboarding',
       name_ar: 'أكمل ملفك الشخصي',
       name_en: 'Complete Your Profile',
+      description_ar: 'أكمل معلومات ملفك الشخصي للحصول على تذاكر مجانية',
+      description_en: 'Complete your profile information to earn free tickets',
       target_type: 'profile_completion',
       target_value: 1,
       reward_entries: 2,
+      reward_cash_iqd: 0,
       status: 'active',
+      display_order: 1,
       is_featured: false,
+      checkpoints: undefined,
+    },
+    {
+      ...mockChallenge,
+      challenge_id: 'cc0e8400-e29b-41d4-a716-446655440003',
+      challenge_type: 'onboarding',
+      name_ar: 'قم بأول عملية شراء',
+      name_en: 'Make Your First Purchase',
+      description_ar: 'أكمل أول عملية شراء للحصول على تذاكر مجانية',
+      description_en: 'Complete your first purchase to earn free tickets',
+      target_type: 'first_transaction',
+      target_value: 1,
+      reward_entries: 3,
+      reward_cash_iqd: 0,
+      status: 'active',
+      display_order: 2,
+      is_featured: false,
+      checkpoints: undefined,
+    },
+    {
+      ...mockChallenge,
+      challenge_id: 'cc0e8400-e29b-41d4-a716-446655440004',
+      challenge_type: 'onboarding',
+      name_ar: 'ادعُ صديقاً',
+      name_en: 'Refer a Friend',
+      description_ar: 'ادعُ صديقاً للانضمام إلى فوز واحصل على تذاكر مجانية',
+      description_en: 'Invite a friend to join FAWZ and earn free tickets',
+      target_type: 'referral_count',
+      target_value: 1,
+      reward_entries: 5,
+      reward_cash_iqd: 0,
+      status: 'active',
+      display_order: 3,
+      is_featured: false,
+      checkpoints: undefined,
+    },
+    {
+      ...mockChallenge,
+      challenge_id: 'cc0e8400-e29b-41d4-a716-446655440005',
+      challenge_type: 'onboarding',
+      name_ar: 'تحقق من رقم هاتفك',
+      name_en: 'Verify Your Phone',
+      description_ar: 'تحقق من رقم هاتفك للحصول على تذاكر مجانية',
+      description_en: 'Verify your phone number to earn free tickets',
+      target_type: 'phone_verification',
+      target_value: 1,
+      reward_entries: 2,
+      reward_cash_iqd: 0,
+      status: 'active',
+      display_order: 4,
+      is_featured: false,
+      checkpoints: undefined,
     },
   ],
-  total_challenges: 2,
+  total_challenges: 5,
   page: 1,
   page_size: 20,
 };

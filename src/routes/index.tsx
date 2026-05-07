@@ -12,12 +12,16 @@ import { AuthRoute } from './layouts/AuthRoute';
 // Lazy load pages
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'));
 const OtpPage = lazy(() => import('@/features/auth/pages/OtpPage'));
+const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('@/features/auth/pages/ResetPasswordPage'));
+const VerifyEmailPage = lazy(() => import('@/features/auth/pages/VerifyEmailPage'));
 const HomePage = lazy(() => import('@/features/home/pages/HomePage'));
 const DrawListPage = lazy(() => import('@/features/draw/pages/DrawListPage'));
 const DrawDetailPage = lazy(() => import('@/features/draw/pages/DrawDetailPage'));
 const LiveDrawPage = lazy(() => import('@/features/draw/pages/LiveDrawPage'));
+const DrawSimulationPage = lazy(() => import('@/features/draw/pages/DrawSimulationPage'));
 const TicketsPage = lazy(() => import('@/features/tickets/pages/TicketsPage'));
-const WalletPage = lazy(() => import('@/features/wallet/pages/WalletPage'));
 const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage'));
 const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'));
 const NotFoundPage = lazy(() => import('@/features/errors/pages/NotFoundPage'));
@@ -33,6 +37,7 @@ const NotificationPreferencesPage = lazy(() => import('@/features/notifications/
 const DisputeSubmissionPage = lazy(() => import('@/features/disputes/pages/DisputeSubmissionPage'));
 const DisputeStatusPage = lazy(() => import('@/features/disputes/pages/DisputeStatusPage'));
 const ConsentPage = lazy(() => import('@/features/consent/pages/ConsentPage'));
+const HelpPage = lazy(() => import('@/features/help/pages/HelpPage'));
 
 // Suspense wrapper for lazy components
 // eslint-disable-next-line react-refresh/only-export-components
@@ -59,6 +64,38 @@ export const router = createBrowserRouter([
         element: (
           <LazyPage>
             <OtpPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: '/register',
+        element: (
+          <LazyPage>
+            <RegisterPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: '/forgot-password',
+        element: (
+          <LazyPage>
+            <ForgotPasswordPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: '/reset-password',
+        element: (
+          <LazyPage>
+            <ResetPasswordPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: '/verify-email',
+        element: (
+          <LazyPage>
+            <VerifyEmailPage />
           </LazyPage>
         ),
       },
@@ -95,6 +132,15 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        // /draws/simulation must be before /draws/:id to avoid 'simulation' being treated as ID
+        path: '/draws/simulation',
+        element: (
+          <LazyPage>
+            <DrawSimulationPage />
+          </LazyPage>
+        ),
+      },
+      {
         path: '/draws/:id',
         element: (
           <LazyPage>
@@ -104,19 +150,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/tickets',
-        element: (
-          <LazyPage>
-            <TicketsPage />
-          </LazyPage>
-        ),
-      },
-      {
-        path: '/wallet',
-        element: (
-          <LazyPage>
-            <WalletPage />
-          </LazyPage>
-        ),
+        element: <Navigate to="/entries" replace />,
       },
       {
         path: '/profile',
@@ -235,6 +269,14 @@ export const router = createBrowserRouter([
         element: (
           <LazyPage>
             <ConsentPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: '/help',
+        element: (
+          <LazyPage>
+            <HelpPage />
           </LazyPage>
         ),
       },

@@ -22,36 +22,43 @@ import {
   mockReferralLink,
   mockDisputeList,
   mockPrizePayoutList,
-  mockPrizeSummary,
   mockConsentList,
   mockConsumerUser,
   mockConsumerUserList,
   // DEV ONLY: Session-based dynamic fixtures
-  SESSION,
   sessionActiveEntries,
   sessionNextDraw,
   sessionPastDraws,
   sessionWonEntries,
-  isDrawFinalized,
+  sessionPrizePayouts,
   getNextDrawTime,
-  randomInt,
 } from '../fixtures';
 
-const API_BASE = 'https://dev.iqarx.com/api/v0';
+const API_BASE = 'https://fawz-sandbox.dev.iqarx.com/api/v0';
 
 // ===========================================
-// DEV ONLY: 10-Second Finalization Timer
-// Uses MODULE_LOAD_TIME from fixtures for consistent timing
+// DEV ONLY: Draw Time Helpers
 // ===========================================
-
-/** DEV ONLY: Check if draw is finalized (10 seconds after module load) */
-function isFinalized(): boolean {
-  return isDrawFinalized();
-}
 
 /** DEV ONLY: Get the draw time ISO string */
 function getDrawTimeISO(): string {
   return new Date(getNextDrawTime()).toISOString();
+}
+
+/** DEV ONLY: Get current draw status based on time */
+function getDrawStatus(): 'scheduled' | 'live' | 'finalized' {
+  const now = Date.now();
+  const drawTime = getNextDrawTime();
+
+  // If we're past the draw time, show as live for 30 seconds, then finalized
+  if (now >= drawTime) {
+    const timeSinceDraw = now - drawTime;
+    if (timeSinceDraw < 30000) {
+      return 'live';
+    }
+    return 'finalized';
+  }
+  return 'scheduled';
 }
 
 // ===========================================
@@ -148,15 +155,17 @@ const userManagementHandlers = [
 
 // ===========================================
 // Draw Management Handlers
-// DEV ONLY: Uses SESSION-based mock data with 10s finalization timer
+// DEV ONLY: Uses SESSION-based mock data with 12s finalization timer
 // ===========================================
 
 const drawManagementHandlers = [
   // DEV ONLY: Get next draw (special endpoint)
-  // Always returns the scheduled draw with draw_date = MODULE_LOAD_TIME + 10s
+  // Returns draw with dynamic status based on time
   http.get(`${API_BASE}/fawz_draw_management/draws/next`, async () => {
     await delay(100);
     const drawTimeISO = getDrawTimeISO();
+    const status = getDrawStatus();
+
     // DEV ONLY: Return draw_date as full ISO timestamp for countdown to work
     // (home.service.ts uses draw_date for nextDrawDate which feeds the countdown)
     const nextDrawCopy = {
@@ -164,6 +173,14 @@ const drawManagementHandlers = [
       draw_date: drawTimeISO, // DEV ONLY: Full ISO for countdown
       entry_cutoff_at: drawTimeISO,
       scheduled_broadcast_at: drawTimeISO,
+      status, // DEV ONLY: Dynamic status based on time
+      // Add winning numbers when finalized
+      ...(status === 'finalized' && {
+        winning_number_1: sessionNextDraw.winning_numbers?.[0] ?? '1234567890',
+        winning_number_2: sessionNextDraw.winning_numbers?.[1] ?? '0987654321',
+        winning_number_3: sessionNextDraw.winning_numbers?.[2] ?? '5678901234',
+        finalized_at: drawTimeISO,
+      }),
     };
     return HttpResponse.json(nextDrawCopy);
   }),
@@ -179,20 +196,10 @@ const drawManagementHandlers = [
 
     // DEV ONLY: If querying for scheduled draws, return session next draw
     if (status === 'scheduled') {
-      if (isFinalized()) {
-        // After 10s, no scheduled draws - return empty
-        return HttpResponse.json({
-          draws_list: [],
-          total_draws: 0,
-          page: 1,
-          page_size: 20,
-        });
-      }
-
       return HttpResponse.json({
         draws_list: [{
           ...sessionNextDraw,
-          draw_date: drawTimeISO, // DEV ONLY: Full ISO for countdown
+          draw_date: drawTimeISO,
           entry_cutoff_at: drawTimeISO,
           scheduled_broadcast_at: drawTimeISO,
         }],
@@ -202,31 +209,8 @@ const drawManagementHandlers = [
       });
     }
 
-    // DEV ONLY: If querying for live draws, return the finalized draw as "live" if it's within the display window
+    // DEV ONLY: If querying for live draws, return empty (draws go live via admin)
     if (status === 'live') {
-      if (isFinalized()) {
-        // Return the just-finalized draw as if it's currently live
-        const totalWinners = randomInt(400000, 900000);
-        const totalPayoutIqd = randomInt(50000000, 150000000);
-        return HttpResponse.json({
-          draws_list: [{
-            ...sessionNextDraw,
-            status: 'finalized', // DEV ONLY: Actually finalized but shown on live page
-            draw_date: drawTimeISO,
-            winning_numbers: SESSION.winningNumbers[0],
-            winning_number_1: parseInt(SESSION.winningNumbers[0], 10),
-            winning_number_2: parseInt(SESSION.winningNumbers[1], 10),
-            winning_number_3: parseInt(SESSION.winningNumbers[2], 10),
-            finalized_at: drawTimeISO,
-            total_winners: totalWinners,
-            total_payout_iqd: totalPayoutIqd,
-          }],
-          total_draws: 1,
-          page: 1,
-          page_size: 20,
-        });
-      }
-      // Before finalization, no live draw yet
       return HttpResponse.json({
         draws_list: [],
         total_draws: 0,
@@ -257,44 +241,27 @@ const drawManagementHandlers = [
   }),
 
   // Get draw by ID (plural)
-  // DEV ONLY: Handles 'next-draw' specially with 10s timer
   http.get(`${API_BASE}/fawz_draw_management/draws/:draw_id`, async ({ params }) => {
     await delay(100);
     const { draw_id } = params;
     const drawTimeISO = getDrawTimeISO();
+    const status = getDrawStatus();
 
-    // DEV ONLY: Handle 'next-draw' with 10-second finalization simulation
+    // DEV ONLY: Handle 'next-draw' - returns draw with dynamic status
     if (draw_id === 'next-draw') {
-      if (isFinalized()) {
-        // DEV ONLY: Return finalized draw with winning numbers and payouts
-        const totalWinners = randomInt(400000, 900000); // 400K-900K winners per spec
-        const totalPayoutIqd = randomInt(50000000, 150000000); // 50M-150M IQD
-        return HttpResponse.json({
-          ...sessionNextDraw,
-          status: 'finalized',
-          draw_date: drawTimeISO, // DEV ONLY: Full ISO
-          winning_numbers: SESSION.winningNumbers[0],
-          winning_number_1: parseInt(SESSION.winningNumbers[0], 10),
-          winning_number_2: parseInt(SESSION.winningNumbers[1], 10),
-          winning_number_3: parseInt(SESSION.winningNumbers[2], 10),
+      return HttpResponse.json({
+        ...sessionNextDraw,
+        draw_date: drawTimeISO,
+        entry_cutoff_at: drawTimeISO,
+        scheduled_broadcast_at: drawTimeISO,
+        status,
+        ...(status === 'finalized' && {
+          winning_number_1: '1234567890',
+          winning_number_2: '0987654321',
+          winning_number_3: '5678901234',
           finalized_at: drawTimeISO,
-          total_winners: totalWinners,
-          total_payout_iqd: totalPayoutIqd,
-          consumer_winners: Math.floor(totalWinners * 0.8),
-          consumer_payout_iqd: Math.floor(totalPayoutIqd * 0.8),
-          merchant_winners: Math.floor(totalWinners * 0.2),
-          merchant_payout_iqd: Math.floor(totalPayoutIqd * 0.2),
-          jackpot_claimed: Math.random() > 0.8,
-        });
-      } else {
-        // DEV ONLY: Return scheduled draw (not yet finalized)
-        return HttpResponse.json({
-          ...sessionNextDraw,
-          draw_date: drawTimeISO, // DEV ONLY: Full ISO for countdown
-          entry_cutoff_at: drawTimeISO,
-          scheduled_broadcast_at: drawTimeISO,
-        });
-      }
+        }),
+      });
     }
 
     // DEV ONLY: Check if it's a past draw ID
@@ -456,6 +423,15 @@ const entryGenerationHandlers = [
       onboarding: 0,
     };
 
+    // DEV ONLY: Compute weekly spark dynamically based on current day
+    // DEV ONLY: Compute weekly spark dynamically based on current day
+    // Can't have more unique transaction days than days elapsed this week
+    const today = new Date().getDay();
+    const currentDayIndex = today === 0 ? 6 : today - 1; // Mon=0, Sun=6
+    const maxSparkDays = currentDayIndex + 1;
+    // Use max value for demo - shows all days up to today filled
+    const weeklyUniqueDays = maxSparkDays;
+
     return HttpResponse.json({
       total_entries: allEntries.length,
       entries_this_week: activeCount,
@@ -464,9 +440,9 @@ const entryGenerationHandlers = [
       active_entries: activeCount,
       won_entries: wonCount,
       total_prizes_iqd: totalPrizes,
-      current_draw_count: activeCount, // DEV ONLY: SESSION.ticketCount
+      current_draw_count: activeCount,
       lifetime_count: allEntries.length + 30, // Add some history
-      weekly_unique_days: SESSION.weeklySpark.current,
+      weekly_unique_days: weeklyUniqueDays,
     });
   }),
 
@@ -706,21 +682,65 @@ const fraudComplianceHandlers = [
 
 const prizePayoutHandlers = [
   // List prize payouts (plural - for prizes.service.ts)
+  // Uses session-based payouts with cap logic applied
   http.get(`${API_BASE}/fawz_prize_payout_management/prize_payouts`, async () => {
     await delay(100);
-    return HttpResponse.json(mockPrizePayoutList);
+    // Combine session payouts with static mock for variety
+    const allPayouts = [...sessionPrizePayouts, ...mockPrizePayoutList.prize_payouts_list];
+    return HttpResponse.json({
+      prize_payouts_list: allPayouts,
+      total_prize_payouts: allPayouts.length,
+      page: 1,
+      page_size: 20,
+    });
   }),
 
   // Get prize payout by ID
-  http.get(`${API_BASE}/fawz_prize_payout_management/prize_payouts/:payout_id`, async () => {
+  http.get(`${API_BASE}/fawz_prize_payout_management/prize_payouts/:payout_id`, async ({ params }) => {
     await delay(100);
-    return HttpResponse.json(mockPrizePayoutList.prize_payouts_list[0]);
+    const payoutId = params.payout_id as string;
+    const payout = sessionPrizePayouts.find(p => p.prize_payout_id === payoutId)
+      || mockPrizePayoutList.prize_payouts_list[0];
+    return HttpResponse.json(payout);
   }),
 
-  // Get prize summary
+  // Get prize summary - computed from session data with cap awareness
   http.get(`${API_BASE}/fawz_prize_payout_management/prize_payouts/summary`, async () => {
     await delay(100);
-    return HttpResponse.json(mockPrizeSummary);
+
+    // Calculate summary from session prize payouts
+    const completedPayouts = sessionPrizePayouts.filter(p => p.payout_status === 'completed');
+    const heldPayouts = sessionPrizePayouts.filter(p => p.payout_status === 'held_cap_exceeded');
+    const pendingPayouts = sessionPrizePayouts.filter(p => p.payout_status === 'pending');
+
+    const completedTotal = completedPayouts.reduce((sum, p) => sum + p.prize_amount_iqd, 0);
+    const heldTotal = heldPayouts.reduce((sum, p) => sum + p.prize_amount_iqd, 0);
+    const pendingTotal = pendingPayouts.reduce((sum, p) => sum + p.prize_amount_iqd, 0);
+
+    // Count wins by tier
+    const winsByTier: Record<string, number> = {
+      last_3: 0,
+      last_5: 0,
+      last_7: 0,
+      last_10: 0,
+      jackpot: 0,
+    };
+    for (const payout of sessionPrizePayouts) {
+      if (winsByTier[payout.prize_tier] !== undefined) {
+        winsByTier[payout.prize_tier]++;
+      }
+    }
+
+    return HttpResponse.json({
+      lifetime_total_iqd: completedTotal + heldTotal + pendingTotal,
+      total_wins: sessionPrizePayouts.length,
+      wins_by_tier: winsByTier,
+      pending_payouts_iqd: pendingTotal + heldTotal, // Include held as pending
+      completed_payouts_iqd: completedTotal,
+      // Additional cap-related stats
+      held_cap_exceeded_count: heldPayouts.length,
+      held_cap_exceeded_iqd: heldTotal,
+    });
   }),
 ];
 

@@ -44,7 +44,7 @@ export default function ConsentPage(): JSX.Element {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="bg-bg-primary">
         <ConsentHeader onBack={handleBack} />
         <div className="p-4 space-y-4">
           <ConsentSkeleton />
@@ -56,7 +56,7 @@ export default function ConsentPage(): JSX.Element {
   // Error state
   if (isError) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="bg-bg-primary">
         <ConsentHeader onBack={handleBack} />
         <ErrorState
           title={t('errors.general')}
@@ -69,10 +69,10 @@ export default function ConsentPage(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="bg-bg-primary">
       <ConsentHeader onBack={handleBack} />
 
-      <div className="p-4 space-y-4">
+      <div className="py-4 space-y-4">
         <p className="text-sm text-text-secondary">
           {isArabic
             ? 'إدارة موافقاتك القانونية'
@@ -149,7 +149,7 @@ function ConsentHeader({ onBack }: ConsentHeaderProps): JSX.Element {
           variant="ghost"
           size="sm"
           onClick={onBack}
-          leftIcon={<ArrowRight className="h-5 w-5 rtl:rotate-180" />}
+          leftIcon={<ArrowRight className="h-5 w-5 ltr:rotate-180" />}
         />
         <h1 className="text-xl font-bold text-text-primary">
           {isArabic ? 'الموافقات' : 'Consents'}

@@ -15,7 +15,7 @@ export default function TicketsPage(): JSX.Element {
   usePageTitle(t('tickets.myTickets'));
 
   return (
-    <div className="space-y-6">
+    <div className="py-4 space-y-6">
       <h1 className="text-2xl font-bold text-text-primary">
         {t('tickets.myTickets')}
       </h1>

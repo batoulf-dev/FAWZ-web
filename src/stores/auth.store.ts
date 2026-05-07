@@ -77,6 +77,9 @@ export const useAuthStore = create<AuthState>()(
 
       // Mock login for development testing only
       mockLogin: () => {
+        if (import.meta.env.VITE_APP_ENV !== 'development') {
+          throw new Error('[FAWZ] mockLogin is only available in development');
+        }
         setTokens(mockAuthTokens.access_token, mockAuthTokens.refresh_token);
         set({
           user: fixtureUser,

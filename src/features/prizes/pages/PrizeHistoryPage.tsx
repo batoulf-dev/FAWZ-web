@@ -106,6 +106,11 @@ function PrizeRow({
       label: t('prize.statusCancelled'),
       color: 'bg-gray-100 text-gray-500',
     },
+    held_cap_exceeded: {
+      icon: <Lock className="h-4 w-4" />,
+      label: t('prize.statusCapExceeded'),
+      color: 'bg-orange-100 text-orange-600',
+    },
   };
 
   const config = statusConfig[payoutStatus] ?? statusConfig.pending;
@@ -148,7 +153,7 @@ function PrizeRow({
               <span className="text-sm">{formattedDate}</span>
             </div>
           </div>
-          <ChevronLeft className="h-5 w-5 text-text-muted rtl:rotate-180" />
+          <ChevronLeft className="h-5 w-5 text-text-muted ltr:rotate-180" />
         </div>
 
         <div className="flex items-center justify-between">
@@ -212,7 +217,7 @@ export default function PrizeHistoryPage(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-primary">
+      <div className="bg-surface-primary">
         <div className="p-4">
           <h1 className="text-xl font-bold text-text-primary mb-4">
             {t('prize.history')}
@@ -239,10 +244,10 @@ export default function PrizeHistoryPage(): React.ReactElement {
   const totalAmount = summary?.lifetime_total_iqd ?? prizeList.reduce((sum: number, p: PrizePayout) => sum + p.prize_amount_iqd, 0);
 
   return (
-    <div className="min-h-screen bg-surface-primary">
+    <div className="bg-surface-primary">
       {!isOnline && <OfflineBanner />}
 
-      <div className="p-4 space-y-4">
+      <div className="py-4 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-text-primary">
@@ -266,7 +271,7 @@ export default function PrizeHistoryPage(): React.ReactElement {
             onAction={() => navigate('/draws')}
           />
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 min-[1000px]:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
             {prizeList.map((prize) => (
               <PrizeRow
                 key={prize.prize_payout_id}

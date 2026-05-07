@@ -24,10 +24,8 @@ import type { ChallengeWithProgress } from '../types/challenges.types';
 // Challenge card component
 function ChallengeCard({
   challenge,
-  onTap,
 }: {
   challenge: ChallengeWithProgress;
-  onTap: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
@@ -45,10 +43,14 @@ function ChallengeCard({
     ? `+${formatNumber(challenge.reward_cash_iqd, lang)} IQD`
     : '';
 
+  // Get display text based on language
+  const isArabic = lang === 'ar' || lang.startsWith('ar-');
+  const displayName = isArabic ? challenge.name_ar : challenge.name_en;
+  const displayDescription = isArabic ? challenge.description_ar : challenge.description_en;
+
   return (
     <Card
-      className={`cursor-pointer hover:shadow-md transition-shadow ${isCompleted ? 'bg-success/5 border-success' : ''}`}
-      onClick={onTap}
+      className={isCompleted ? 'bg-success/5 border-success' : ''}
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
@@ -57,13 +59,12 @@ function ChallengeCard({
               {isCompleted && (
                 <CheckCircle2 className="h-5 w-5 text-success" />
               )}
-              <h3 className="font-bold text-text-primary">{challenge.name_ar}</h3>
+              <h3 className="font-bold text-text-primary">{displayName}</h3>
             </div>
             <p className="text-sm text-text-secondary line-clamp-2">
-              {challenge.description_ar}
+              {displayDescription}
             </p>
           </div>
-          <ChevronLeft className="h-5 w-5 text-text-muted flex-shrink-0 rtl:rotate-180" />
         </div>
 
         {/* Progress Bar */}
@@ -79,8 +80,8 @@ function ChallengeCard({
             </div>
             <div className="h-2 bg-surface-secondary rounded-full overflow-hidden">
               <div
-                className="h-full bg-brand-primary rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
+                className="h-full bg-gradient-to-r from-brand-primary to-brand-gold rounded-full transition-all duration-500"
+                style={{ width: `${progressPercent}%` }} // dynamic — cannot use Tailwind
               />
             </div>
           </div>
@@ -117,18 +118,15 @@ function ChallengeCard({
 function OnboardingProgressCard({
   completed,
   total,
-  onTap,
 }: {
   completed: number;
   total: number;
-  onTap: () => void;
 }) {
   const { t } = useTranslation();
 
   return (
     <Card
-      className="bg-gradient-to-r from-brand-primary to-brand-primary-dark text-white cursor-pointer"
-      onClick={onTap}
+      className="bg-gradient-to-br from-brand-primary from-60% to-brand-gold text-white"
     >
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
@@ -147,7 +145,7 @@ function OnboardingProgressCard({
         <div className="h-2 bg-white/20 rounded-full overflow-hidden">
           <div
             className="h-full bg-white rounded-full transition-all duration-500"
-            style={{ width: `${(completed / total) * 100}%` }}
+            style={{ width: `${(completed / total) * 100}%` }} // dynamic — cannot use Tailwind
           />
         </div>
       </CardContent>
@@ -215,7 +213,7 @@ export default function ChallengesPage(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-primary">
+      <div className="bg-surface-primary">
         <div className="p-4">
           <h1 className="text-xl font-bold text-text-primary mb-4">
             {t('challenge.challenges')}
@@ -238,10 +236,10 @@ export default function ChallengesPage(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen bg-surface-primary">
+    <div className="bg-surface-primary">
       {!isOnline && <OfflineBanner />}
 
-      <div className="p-4 space-y-4">
+      <div className="py-4 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-text-primary">
@@ -255,7 +253,6 @@ export default function ChallengesPage(): React.ReactElement {
           <OnboardingProgressCard
             completed={onboardingCompleted}
             total={onboardingTotal}
-            onTap={() => navigate('/challenges/onboarding')}
           />
         )}
 
@@ -265,12 +262,11 @@ export default function ChallengesPage(): React.ReactElement {
             <h2 className="font-semibold text-text-primary mb-3">
               {t('challenge.activeChallenges')}
             </h2>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 min-[1000px]:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
               {active.map((challenge) => (
                 <ChallengeCard
                   key={challenge.challenge_id}
                   challenge={challenge}
-                  onTap={() => navigate(`/challenges/${challenge.challenge_id}`)}
                 />
               ))}
             </div>
@@ -297,17 +293,16 @@ export default function ChallengesPage(): React.ReactElement {
                 {t('challenge.completedChallenges')} ({completed.length})
               </h2>
               <ChevronLeft
-                className={`h-5 w-5 text-text-muted transition-transform ${showCompleted ? 'rotate-90' : 'rtl:rotate-180'}`}
+                className={`h-5 w-5 text-text-muted transition-transform ${showCompleted ? 'rotate-90' : 'ltr:rotate-180'}`}
               />
             </button>
 
             {showCompleted && (
-              <div className="space-y-3 mt-2">
+              <div className="grid grid-cols-1 min-[1000px]:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 mt-2">
                 {completed.map((challenge) => (
                   <ChallengeCard
                     key={challenge.challenge_id}
                     challenge={challenge}
-                    onTap={() => navigate(`/challenges/${challenge.challenge_id}`)}
                   />
                 ))}
               </div>

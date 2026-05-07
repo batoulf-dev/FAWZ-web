@@ -67,24 +67,41 @@ export const nameSchema = z
 // Request Schemas
 // ==========================================
 
-// Sign Up Request
+// Base Sign Up fields (shared between form and request schemas)
+const signUpBaseFields = {
+  first_name: nameSchema,
+  last_name: nameSchema,
+  email: emailSchema,
+  password: passwordSchema,
+  confirm_password: z.string().min(1, 'تأكيد كلمة المرور مطلوب'),
+  phone_number: phoneSchema,
+  gender: GenderEnum.optional(),
+  country: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  street: z.string().optional(),
+  zip_code: z.string().regex(/^\d{5}$/).optional(),
+};
+
+// Password match refinement
+const passwordMatchRefinement = (data: { password: string; confirm_password: string }): boolean =>
+  data.password === data.confirm_password;
+
+// Sign Up Form Schema (for React Hook Form - app_id added programmatically)
+export const signUpFormSchema = z
+  .object(signUpBaseFields)
+  .refine(passwordMatchRefinement, {
+    message: 'كلمات المرور غير متطابقة',
+    path: ['confirm_password'],
+  });
+
+// Sign Up Request (full API request including app_id)
 export const signUpRequestSchema = z
   .object({
-    app_id: z.string().default('fawz'),
-    first_name: nameSchema,
-    last_name: nameSchema,
-    email: emailSchema,
-    password: passwordSchema,
-    confirm_password: z.string().min(1, 'تأكيد كلمة المرور مطلوب'),
-    phone_number: phoneSchema,
-    gender: GenderEnum.optional(),
-    country: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    street: z.string().optional(),
-    zip_code: z.string().regex(/^\d{5}$/).optional(),
+    ...signUpBaseFields,
+    app_id: z.string().min(1),
   })
-  .refine((data) => data.password === data.confirm_password, {
+  .refine(passwordMatchRefinement, {
     message: 'كلمات المرور غير متطابقة',
     path: ['confirm_password'],
   });

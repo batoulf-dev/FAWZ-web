@@ -180,14 +180,14 @@ export default function ReferralHistoryPage(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface-primary">
+      <div className="bg-surface-primary">
         <div className="p-4">
           <div className="flex items-center gap-2 mb-4">
             <button
               onClick={() => navigate(-1)}
               className="text-text-secondary"
             >
-              <ArrowRight className="h-5 w-5 rtl:rotate-180" />
+              <ArrowRight className="h-5 w-5 ltr:rotate-180" />
             </button>
             <h1 className="text-xl font-bold text-text-primary">
               {t('referral.history')}
@@ -219,17 +219,17 @@ export default function ReferralHistoryPage(): React.ReactElement {
   };
 
   return (
-    <div className="min-h-screen bg-surface-primary">
+    <div className="bg-surface-primary">
       {!isOnline && <OfflineBanner />}
 
-      <div className="p-4 space-y-4">
+      <div className="py-4 space-y-4">
         {/* Header */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate(-1)}
             className="text-text-secondary hover:text-text-primary"
           >
-            <ArrowRight className="h-5 w-5 rtl:rotate-180" />
+            <ArrowRight className="h-5 w-5 ltr:rotate-180" />
           </button>
           <h1 className="text-xl font-bold text-text-primary">
             {t('referral.history')}
@@ -246,7 +246,7 @@ export default function ReferralHistoryPage(): React.ReactElement {
             onAction={() => navigate('/referral')}
           />
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 min-[1000px]:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
             {referrals.map((referral) => (
               <ReferralRow
                 key={referral.referral_id}

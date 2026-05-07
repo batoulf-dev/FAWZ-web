@@ -56,7 +56,7 @@ export default function SettingsPage(): JSX.Element {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary pb-20">
+    <div className="bg-bg-primary pb-20">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-bg-primary border-b border-border-default">
         <div className="flex items-center gap-3 px-4 py-3">
@@ -64,7 +64,7 @@ export default function SettingsPage(): JSX.Element {
             variant="ghost"
             size="sm"
             onClick={handleBack}
-            leftIcon={<ArrowRight className="h-5 w-5 rtl:rotate-180" />}
+            leftIcon={<ArrowRight className="h-5 w-5 ltr:rotate-180" />}
           />
           <h1 className="text-xl font-bold text-text-primary">
             {t('settings.title')}
@@ -72,7 +72,7 @@ export default function SettingsPage(): JSX.Element {
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="py-4 space-y-4">
         {/* Language Section */}
         <Card variant="outlined" padding="none">
           <div className="px-4 py-3 border-b border-border-default">
@@ -260,7 +260,7 @@ function SettingsLink({
         <p className="text-sm font-medium text-text-primary">{title}</p>
         <p className="text-xs text-text-muted mt-0.5">{description}</p>
       </div>
-      {rightContent ?? <ChevronLeft className="h-5 w-5 text-text-muted rtl:rotate-180" />}
+      {rightContent ?? <ChevronLeft className="h-5 w-5 text-text-muted ltr:rotate-180" />}
     </button>
   );
 }

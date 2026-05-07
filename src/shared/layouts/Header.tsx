@@ -25,7 +25,6 @@ export function Header(): JSX.Element {
 
   const language = useUIStore((state) => state.language);
   const setLanguage = useUIStore((state) => state.setLanguage);
-  const sidebarCollapsed = useUIStore((state) => state.sidebarCollapsed);
   const setSidebarOpen = useUIStore((state) => state.setSidebarOpen);
 
   const handleLanguageChange = async (lang: Language) => {
@@ -41,11 +40,10 @@ export function Header(): JSX.Element {
   return (
     <header
       className={cn(
-        'fixed top-0 end-0 z-30 h-16 bg-bg-card border-b border-border-default',
+        'fixed top-0 inset-x-0 z-30 h-16 bg-bg-card border-b border-border-default',
         'transition-all duration-300',
-        // Adjust for sidebar width
-        sidebarCollapsed ? 'lg:start-20' : 'lg:start-64',
-        'start-0',
+        // Hide on desktop - sidebar handles navigation
+        'lg:hidden',
       )}
     >
       <div className="flex h-full items-center justify-between px-4">

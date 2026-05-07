@@ -30,7 +30,7 @@ export function Skeleton({
   return (
     <div
       className={cn('skeleton', roundedStyles[rounded], className)}
-      style={{
+      style={{ // dynamic — cannot use Tailwind for computed dimensions
         width: typeof width === 'number' ? `${width}px` : width,
         height: typeof height === 'number' ? `${height}px` : height,
       }}

@@ -20,6 +20,7 @@ import type {
   UserProfileResponse,
   MessageResponse,
 } from '../types/auth.types';
+import { env } from '@/config/env';
 
 // ==========================================
 // API Base Path
@@ -45,7 +46,7 @@ export const authKeys = {
 async function signUp(data: SignUpRequest): Promise<SignUpResponse> {
   const response = await apiClient.post<SignUpResponse>(`${AUTH_BASE}/sign_up`, {
     ...data,
-    app_id: data.app_id || 'fawz',
+    app_id: env.appId,
   });
   return response.data;
 }

@@ -86,7 +86,7 @@ export default function DisputeSubmissionPage(): JSX.Element {
   // Loading state
   if (isCheckingLimit) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="bg-bg-primary">
         <DisputeHeader onBack={handleBack} />
         <div className="p-4">
           <DisputeFormSkeleton />
@@ -98,7 +98,7 @@ export default function DisputeSubmissionPage(): JSX.Element {
   // Blocked state (limit reached)
   if (!canSubmit) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="bg-bg-primary">
         <DisputeHeader onBack={handleBack} />
         <div className="p-4">
           <Card variant="outlined" className="text-center py-8">
@@ -125,10 +125,10 @@ export default function DisputeSubmissionPage(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary pb-20">
+    <div className="bg-bg-primary pb-20">
       <DisputeHeader onBack={handleBack} />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="py-4 space-y-4">
         {/* Remaining disputes indicator */}
         <div className="flex items-center gap-2 text-sm text-text-secondary">
           <AlertCircle className="h-4 w-4" />
@@ -240,7 +240,7 @@ function DisputeHeader({ onBack }: DisputeHeaderProps): JSX.Element {
           variant="ghost"
           size="sm"
           onClick={onBack}
-          leftIcon={<ArrowRight className="h-5 w-5 rtl:rotate-180" />}
+          leftIcon={<ArrowRight className="h-5 w-5 ltr:rotate-180" />}
         />
         <h1 className="text-xl font-bold text-text-primary">
           {t('disputes.submit')}

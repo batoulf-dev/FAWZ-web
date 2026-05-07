@@ -15,6 +15,7 @@ import {
   formatPhoneNumber,
   truncate,
   formatFileSize,
+  toArabicNumerals,
 } from './formatters';
 
 describe('formatters', () => {
@@ -62,6 +63,24 @@ describe('formatters', () => {
     it('should handle zero', () => {
       const result = formatNumber(0, 'en');
       expect(result).toBe('0');
+    });
+  });
+
+  describe('toArabicNumerals', () => {
+    it('should convert Western Arabic numerals to Eastern Arabic', () => {
+      expect(toArabicNumerals('0123456789')).toBe('٠١٢٣٤٥٦٧٨٩');
+    });
+
+    it('should convert numbers', () => {
+      expect(toArabicNumerals(12345)).toBe('١٢٣٤٥');
+    });
+
+    it('should preserve non-numeric characters', () => {
+      expect(toArabicNumerals('12:34')).toBe('١٢:٣٤');
+    });
+
+    it('should handle mixed content', () => {
+      expect(toArabicNumerals('7d 8h 30m')).toBe('٧d ٨h ٣٠m');
     });
   });
 
@@ -140,34 +159,73 @@ describe('formatters', () => {
   });
 
   describe('formatCountdown', () => {
-    it('should format countdown with hours', () => {
-      const result = formatCountdown(3661); // 1 hour, 1 minute, 1 second
-      expect(result).toBe('01:01:01');
+    describe('English locale', () => {
+      it('should format countdown with days, hours, and minutes', () => {
+        const result = formatCountdown(176 * 3600 + 30 * 60, 'en'); // 176 hours 30 minutes = 7d 8h 30m
+        expect(result).toBe('7d 8h 30m');
+      });
+
+      it('should format countdown with days (exact)', () => {
+        const result = formatCountdown(2 * 86400, 'en'); // 2 days exactly
+        expect(result).toBe('2d 0h 0m');
+      });
+
+      it('should format countdown with hours (less than 24h)', () => {
+        const result = formatCountdown(3661, 'en'); // 1 hour, 1 minute, 1 second
+        expect(result).toBe('1h 1m 1s');
+      });
+
+      it('should format countdown without hours', () => {
+        const result = formatCountdown(125, 'en'); // 2 minutes, 5 seconds
+        expect(result).toBe('02:05');
+      });
+
+      it('should handle zero seconds', () => {
+        const result = formatCountdown(0, 'en');
+        expect(result).toBe('00:00');
+      });
+
+      it('should handle negative seconds', () => {
+        const result = formatCountdown(-10, 'en');
+        expect(result).toBe('00:00');
+      });
+
+      it('should pad single digits', () => {
+        const result = formatCountdown(65, 'en'); // 1 minute, 5 seconds
+        expect(result).toBe('01:05');
+      });
+
+      it('should handle exactly one hour', () => {
+        const result = formatCountdown(3600, 'en');
+        expect(result).toBe('1h 0m 0s');
+      });
     });
 
-    it('should format countdown without hours', () => {
-      const result = formatCountdown(125); // 2 minutes, 5 seconds
-      expect(result).toBe('02:05');
-    });
+    describe('Arabic locale (default)', () => {
+      it('should format countdown with Arabic numerals and abbreviations', () => {
+        const result = formatCountdown(3661, 'ar'); // 1 hour, 1 minute, 1 second
+        expect(result).toBe('١س ١د ١ث');
+      });
 
-    it('should handle zero seconds', () => {
-      const result = formatCountdown(0);
-      expect(result).toBe('00:00');
-    });
+      it('should format countdown with days using Arabic', () => {
+        const result = formatCountdown(2 * 86400, 'ar'); // 2 days exactly
+        expect(result).toBe('٢ي ٠س ٠د');
+      });
 
-    it('should handle negative seconds', () => {
-      const result = formatCountdown(-10);
-      expect(result).toBe('00:00');
-    });
+      it('should format MM:SS with Arabic numerals', () => {
+        const result = formatCountdown(125, 'ar'); // 2 minutes, 5 seconds
+        expect(result).toBe('٠٢:٠٥');
+      });
 
-    it('should pad single digits', () => {
-      const result = formatCountdown(65); // 1 minute, 5 seconds
-      expect(result).toBe('01:05');
-    });
+      it('should handle zero seconds with Arabic numerals', () => {
+        const result = formatCountdown(0, 'ar');
+        expect(result).toBe('٠٠:٠٠');
+      });
 
-    it('should handle exactly one hour', () => {
-      const result = formatCountdown(3600);
-      expect(result).toBe('01:00:00');
+      it('should default to Arabic locale', () => {
+        const result = formatCountdown(65); // 1 minute, 5 seconds
+        expect(result).toBe('٠١:٠٥');
+      });
     });
   });
 

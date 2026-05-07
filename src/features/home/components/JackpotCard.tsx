@@ -49,7 +49,7 @@ export function JackpotCard({
 
   return (
     <Card
-      className="bg-gradient-to-br from-amber-50 to-orange-50 border-brand-gold/30 cursor-pointer hover:shadow-lg transition-all overflow-hidden"
+      className="bg-gradient-to-br from-amber-50 to-orange-50 border-brand-gold/30 cursor-pointer transition-all duration-200 overflow-hidden hover:shadow-xl hover:shadow-amber-200/50 hover:scale-[1.01] hover:border-brand-gold/50"
       onClick={onClick}
     >
       {/* Decorative sparkle elements */}
@@ -75,7 +75,7 @@ export function JackpotCard({
               </div>
             </div>
           </div>
-          <ChevronLeft className="h-5 w-5 text-amber-400 rtl:rotate-180" />
+          <ChevronLeft className="h-5 w-5 text-amber-400 ltr:rotate-180" />
         </div>
 
         {/* Jackpot Amount */}

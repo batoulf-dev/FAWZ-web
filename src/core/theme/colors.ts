@@ -61,6 +61,25 @@ export const colors = {
     last3: '#22C55E',
   },
 
+  // Gold Winner Card
+  goldCard: {
+    gradientStart: '#F5C518',
+    gradientMid1: '#FFE566',
+    gradientMid2: '#D4A017',
+    gradientEnd: '#FFD700',
+    border: '#C9960C',
+    text: '#7A4F00',
+    shadow: 'rgba(197, 145, 0, 0.45)',
+  },
+
+  // Confetti Colors
+  confetti: {
+    gold: '#FFD700',
+    amber: '#FFC107',
+    white: '#FFFFFF',
+    orange: '#FF8C00',
+  },
+
   // Interactive States
   interactive: {
     hover: 'rgba(107, 78, 170, 0.08)',

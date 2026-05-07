@@ -1,6 +1,7 @@
 /**
  * Card Component
  * Variants: default, elevated, outlined
+ * Interactive cards get hover/focus states for desktop UX
  */
 
 import { forwardRef, type HTMLAttributes } from 'react';
@@ -11,6 +12,8 @@ type CardVariant = 'default' | 'elevated' | 'outlined';
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  /** Adds hover/focus states for clickable cards */
+  interactive?: boolean;
 }
 
 const variantStyles: Record<CardVariant, string> = {
@@ -27,7 +30,7 @@ const paddingStyles: Record<NonNullable<CardProps['padding']>, string> = {
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'default', padding = 'md', children, ...props }, ref) => {
+  ({ className, variant = 'default', padding = 'md', interactive = false, children, ...props }, ref) => {
     return (
       <div
         ref={ref}
@@ -35,8 +38,16 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           'rounded-xl',
           variantStyles[variant],
           paddingStyles[padding],
+          // Interactive hover states for desktop
+          interactive && [
+            'cursor-pointer transition-all duration-200',
+            'hover:shadow-lg hover:scale-[1.01] hover:border-brand-primary/30',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2',
+          ],
           className,
         )}
+        tabIndex={interactive ? 0 : undefined}
+        role={interactive ? 'button' : undefined}
         {...props}
       >
         {children}
