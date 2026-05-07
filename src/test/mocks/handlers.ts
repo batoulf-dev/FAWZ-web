@@ -305,9 +305,16 @@ const entryGenerationHandlers = [
     await delay(100);
     const url = new URL(request.url);
     const source = url.searchParams.get('source');
+    const consumerId = url.searchParams.get('consumer_user_id');
+
+    // Filter by consumer_user_id - default to authenticated user (mockUser.id)
+    // This simulates backend behavior where token identifies the user
+    const userId = consumerId || mockUser.id;
+    let entries = mockEntryList.fawz_entries_list.filter(
+      (entry) => entry.consumer_user_id === userId,
+    );
 
     // Filter by source if specified
-    let entries = [...mockEntryList.fawz_entries_list];
     if (source && source !== 'all') {
       entries = entries.filter((entry) => entry.source === source);
     }
