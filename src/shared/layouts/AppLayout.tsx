@@ -8,6 +8,7 @@ import { cn } from '@/core/utils/cn';
 import { useUIStore } from '@/stores/ui.store';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { BottomTabBar } from './BottomTabBar';
 import { OfflineBanner } from '@/shared/components/OfflineBanner';
 
 export function AppLayout(): JSX.Element {
@@ -24,7 +25,7 @@ export function AppLayout(): JSX.Element {
       {/* Main Content */}
       <main
         className={cn(
-          'pt-16 min-h-dvh transition-all duration-300',
+          'pt-16 min-h-dvh transition-all duration-300 pb-20 lg:pb-0',
           // Adjust for sidebar width
           sidebarCollapsed ? 'lg:ps-20' : 'lg:ps-64',
         )}
@@ -36,6 +37,9 @@ export function AppLayout(): JSX.Element {
 
       {/* Offline Banner */}
       <OfflineBanner />
+
+      {/* Bottom Tab Bar (mobile only) */}
+      <BottomTabBar />
     </div>
   );
 }

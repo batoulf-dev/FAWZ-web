@@ -16,6 +16,7 @@ import { OfflineBanner } from '@/shared/components/OfflineBanner';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
 import { useReferralHistory } from '../services/referrals.service';
+import { formatNumber, formatLocalizedDate } from '@/core/utils/formatters';
 import type { ReferralStatus } from '../types/referrals.types';
 
 // Referral row component
@@ -32,7 +33,8 @@ function ReferralRow({
   rewardEntries: number;
   rewardCash: number;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
 
   const statusConfig: Record<
     ReferralStatus,
@@ -94,11 +96,11 @@ function ReferralRow({
   const isSuccessful = status === 'rewarded' || status === 'qualified';
 
   const formattedDate = qualifiedAt
-    ? new Date(qualifiedAt).toLocaleDateString('ar-IQ', {
+    ? formatLocalizedDate(qualifiedAt, {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
-      })
+      }, lang)
     : null;
 
   return (
@@ -131,7 +133,7 @@ function ReferralRow({
               <span className="text-sm font-medium">
                 {rewardEntries > 0 && `+${rewardEntries} ${t('entries.numbers')}`}
                 {rewardEntries > 0 && rewardCash > 0 && ' + '}
-                {rewardCash > 0 && `${rewardCash.toLocaleString('ar-IQ')} IQD`}
+                {rewardCash > 0 && `${formatNumber(rewardCash, lang)} IQD`}
               </span>
             </div>
           </div>
@@ -241,7 +243,7 @@ export default function ReferralHistoryPage(): React.ReactElement {
             title={t('referral.noReferralsYet')}
             description={t('referral.shareYourLink')}
             actionLabel={t('referral.inviteNow')}
-            onAction={() => navigate('/referrals')}
+            onAction={() => navigate('/referral')}
           />
         ) : (
           <div className="space-y-3">

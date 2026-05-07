@@ -4,18 +4,20 @@
  */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Wifi, WifiOff, AlertTriangle, Trophy, Users, Share2 } from 'lucide-react';
+import { ArrowRight, Wifi, WifiOff, AlertTriangle, Trophy, Users } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/Card';
-import { Button } from '@/shared/components/Button';
 import { Skeleton } from '@/shared/components/Skeleton';
 import { ErrorState } from '@/shared/components/ErrorState';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
 import { useCurrentDraw, useDrawDigitEvents } from '../services/draw.service';
-import { formatCurrency } from '@/core/utils/formatters';
+import { useEntryList } from '@/features/entries/services/entries.service';
+import { formatCurrency, formatLocalizedDate, formatNumber, DATE_FORMAT_PRESETS } from '@/core/utils/formatters';
+import { LotteryAnimation, DrawResultOverlay } from '../components';
+import { compareTickets, PRIZE_TIERS } from '../components/utils';
 import type { DrawDigitEvent } from '../types/draw.types';
 
 // Local state interface for live draw
@@ -58,146 +60,212 @@ function ConnectionStatus({ status }: { status: 'connected' | 'degraded' | 'disc
   );
 }
 
-// Digit slot component
-function DigitSlot({
-  digit,
-  isRevealed,
-  isMatching,
-}: {
-  digit?: number;
-  isRevealed: boolean;
-  isMatching: boolean;
-}) {
-  return (
-    <div
-      className={`
-        w-8 h-12 flex items-center justify-center
-        rounded-lg text-xl font-bold
-        transition-all duration-300
-        ${isRevealed
-          ? isMatching
-            ? 'bg-brand-gold text-white scale-110'
-            : 'bg-surface-secondary text-text-primary'
-          : 'bg-surface-tertiary text-text-muted animate-pulse'
-        }
-      `}
-    >
-      {isRevealed ? digit : '?'}
-    </div>
-  );
-}
 
-// Winning number row component
-function WinningNumberRow({
-  numberIndex,
-  digits,
-  userMatchingDigits,
+// Animated winning ticket row component
+function AnimatedWinningTicketRow({
+  ticketIndex,
+  winningNumber,
+  isAnimating,
+  animationDelay,
 }: {
-  numberIndex: number;
-  digits: (number | undefined)[];
-  userMatchingDigits: number;
+  ticketIndex: number;
+  winningNumber: string;
+  isAnimating: boolean;
+  animationDelay: number;
 }) {
   const { t } = useTranslation();
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+
+  useEffect(() => {
+    if (isAnimating) {
+      const timeout = setTimeout(() => {
+        setShouldAnimate(true);
+      }, animationDelay);
+      return () => clearTimeout(timeout);
+    }
+    return undefined;
+  }, [isAnimating, animationDelay]);
 
   return (
     <div className="space-y-2">
       <p className="text-sm text-text-secondary text-center">
-        {t('draw.winningNumber', { index: numberIndex })}
+        {t('draw.winningTicket', { index: ticketIndex })}
+      </p>
+      {shouldAnimate ? (
+        <LotteryAnimation
+          winningNumber={winningNumber}
+          duration={1500}
+          autoStart={true}
+        />
+      ) : (
+        <div className="flex justify-center gap-1 rtl:flex-row-reverse">
+          {Array.from({ length: 10 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="w-8 h-12 flex items-center justify-center rounded-lg text-xl font-bold bg-surface-tertiary text-text-muted animate-pulse"
+            >
+              ?
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// User ticket comparison row - shows user's ticket with matching digits highlighted
+function UserTicketComparisonRow({
+  userTickets,
+  winningNumbers,
+  isAnimating,
+  animationDelay,
+}: {
+  userTickets: string[];
+  winningNumbers: string[];
+  isAnimating: boolean;
+  animationDelay: number;
+}) {
+  const { t } = useTranslation();
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+  const [currentTicketIndex, setCurrentTicketIndex] = useState(0);
+  const [isShuffling, setIsShuffling] = useState(false);
+  const [shuffleDisplay, setShuffleDisplay] = useState('??????????');
+  const [isRevealed, setIsRevealed] = useState(false);
+
+  // Get current ticket
+  const currentTicket = userTickets[currentTicketIndex]?.padStart(10, '0') || '0000000000';
+
+  // Find best match for current ticket against all winning numbers
+  const findBestMatch = (ticket: string) => {
+    let bestMatches = 0;
+    let bestWinningNumber = winningNumbers[0] || '0000000000';
+
+    for (const winNum of winningNumbers) {
+      let matches = 0;
+      for (let i = 9; i >= 0; i--) {
+        if (ticket[i] === winNum[i]) {
+          matches++;
+        } else {
+          break;
+        }
+      }
+      if (matches > bestMatches) {
+        bestMatches = matches;
+        bestWinningNumber = winNum;
+      }
+    }
+    return { matchCount: bestMatches, winningNumber: bestWinningNumber };
+  };
+
+  const { matchCount, winningNumber: matchedWinningNumber } = findBestMatch(currentTicket);
+
+  useEffect(() => {
+    if (isAnimating) {
+      const timeout = setTimeout(() => {
+        setShouldAnimate(true);
+        setIsShuffling(true);
+      }, animationDelay);
+      return () => clearTimeout(timeout);
+    }
+    return undefined;
+  }, [isAnimating, animationDelay]);
+
+  // Shuffle animation
+  useEffect(() => {
+    if (!isShuffling) return undefined;
+
+    let count = 0;
+    const maxCount = 20;
+    const interval = setInterval(() => {
+      // Generate random digits
+      const randomDigits = Array.from({ length: 10 }, () =>
+        Math.floor(Math.random() * 10)
+      ).join('');
+      setShuffleDisplay(randomDigits);
+      count++;
+
+      if (count >= maxCount) {
+        clearInterval(interval);
+        setIsShuffling(false);
+        setIsRevealed(true);
+      }
+    }, 75);
+
+    return () => clearInterval(interval);
+  }, [isShuffling]);
+
+  // Cycle through tickets
+  useEffect(() => {
+    if (!isRevealed || userTickets.length <= 1) return undefined;
+
+    const interval = setInterval(() => {
+      setCurrentTicketIndex((prev) => (prev + 1) % userTickets.length);
+      // Reset and reshuffle for new ticket
+      setIsRevealed(false);
+      setIsShuffling(true);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [isRevealed, userTickets.length]);
+
+  if (!shouldAnimate) {
+    return (
+      <div className="space-y-2 p-4 bg-brand-primary/5 rounded-xl border-2 border-brand-primary/20">
+        <p className="text-sm text-brand-primary text-center font-medium">
+          {t('draw.yourTicket')}
+        </p>
+        <div className="flex justify-center gap-1 rtl:flex-row-reverse">
+          {Array.from({ length: 10 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="w-8 h-12 flex items-center justify-center rounded-lg text-xl font-bold bg-surface-tertiary text-text-muted animate-pulse"
+            >
+              ?
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const displayDigits = isRevealed ? currentTicket : shuffleDisplay;
+
+  return (
+    <div className="space-y-2 p-4 bg-brand-primary/5 rounded-xl border-2 border-brand-primary/20">
+      <p className="text-sm text-brand-primary text-center font-medium">
+        {t('draw.yourTicket')} {userTickets.length > 1 && `(${currentTicketIndex + 1}/${userTickets.length})`}
       </p>
       <div className="flex justify-center gap-1 rtl:flex-row-reverse">
-        {digits.map((digit, idx) => (
-          <DigitSlot
-            key={idx}
-            digit={digit}
-            isRevealed={digit !== undefined}
-            isMatching={idx < userMatchingDigits}
-          />
-        ))}
+        {displayDigits.split('').map((digit, idx) => {
+          // Check if this digit matches (from end)
+          const isMatching = isRevealed && idx >= (10 - matchCount) &&
+            currentTicket[idx] === matchedWinningNumber[idx];
+
+          return (
+            <div
+              key={idx}
+              className={`
+                w-8 h-12 flex items-center justify-center rounded-lg text-xl font-bold
+                transition-all duration-300
+                ${isRevealed
+                  ? isMatching
+                    ? 'bg-white border-2 border-brand-gold text-brand-gold shadow-md'
+                    : 'bg-surface-secondary text-text-primary'
+                  : 'bg-surface-tertiary text-text-muted'
+                }
+                ${isShuffling ? 'animate-pulse' : ''}
+              `}
+            >
+              {digit}
+            </div>
+          );
+        })}
       </div>
-    </div>
-  );
-}
-
-// Winner result overlay
-function WinnerOverlay({
-  prizeAmount,
-  tier,
-  onShare,
-  onViewResults,
-}: {
-  prizeAmount: number;
-  tier: string;
-  onShare: () => void;
-  onViewResults: () => void;
-}) {
-  const { t } = useTranslation();
-
-  return (
-    <div className="fixed inset-0 bg-brand-gold/95 flex items-center justify-center z-50 p-4">
-      <div className="text-center text-white max-w-md">
-        <div className="text-6xl mb-4">🎉</div>
-        <h1 className="text-3xl font-bold mb-2">{t('draw.youWon')}</h1>
-        <p className="text-5xl font-bold mb-2">{formatCurrency(prizeAmount)}</p>
-        <p className="text-lg opacity-80 mb-8">{tier}</p>
-
-        <div className="space-y-3">
-          <Button
-            onClick={onShare}
-            className="w-full bg-white text-brand-gold hover:bg-white/90"
-          >
-            <Share2 className="h-5 w-5 me-2" />
-            {t('draw.shareWin')}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onViewResults}
-            className="w-full border-white text-white hover:bg-white/10"
-          >
-            {t('draw.viewFullResults')}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Non-winner result overlay
-function NonWinnerOverlay({
-  entryCount,
-  onInviteFriends,
-  onViewResults,
-}: {
-  entryCount: number;
-  onInviteFriends: () => void;
-  onViewResults: () => void;
-}) {
-  const { t } = useTranslation();
-
-  return (
-    <div className="fixed inset-0 bg-brand-primary/95 flex items-center justify-center z-50 p-4">
-      <div className="text-center text-white max-w-md">
-        <h1 className="text-2xl font-bold mb-4">{t('draw.drawEnded')}</h1>
-        <p className="text-lg opacity-80 mb-8">
-          {t('draw.youHaveEntries', { count: entryCount })}
+      {isRevealed && matchCount >= 3 && (
+        <p className="text-center text-sm text-brand-gold font-medium mt-2">
+          {matchCount} {t('draw.digitsMatched')}!
         </p>
-
-        <div className="space-y-3">
-          <Button
-            onClick={onInviteFriends}
-            className="w-full bg-white text-brand-primary hover:bg-white/90"
-          >
-            <Users className="h-5 w-5 me-2" />
-            {t('draw.inviteFriends')}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onViewResults}
-            className="w-full border-white text-white hover:bg-white/10"
-          >
-            {t('draw.viewFullResults')}
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -228,7 +296,8 @@ function LiveDrawSkeleton() {
 }
 
 export default function LiveDrawPage(): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const navigate = useNavigate();
   const { drawId } = useParams<{ drawId?: string }>();
   const isOnline = useNetworkStatus();
@@ -240,9 +309,9 @@ export default function LiveDrawPage(): React.ReactElement {
     revealedDigits: [],
     viewerCount: 0,
   });
-  const [showWinnerOverlay, setShowWinnerOverlay] = useState(false);
-  const [showNonWinnerOverlay, setShowNonWinnerOverlay] = useState(false);
-  const [winResult, setWinResult] = useState<{ amount: number; tier: string } | null>(null);
+  const [showResultOverlay, setShowResultOverlay] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animationComplete, setAnimationComplete] = useState(false);
 
   usePageTitle(t('draw.liveDraw'));
 
@@ -256,6 +325,47 @@ export default function LiveDrawPage(): React.ReactElement {
   const {
     data: digitEvents,
   } = useDrawDigitEvents(drawId ?? currentDraw?.draw_id ?? '', !!currentDraw);
+
+  // Fetch user's active entries for ticket comparison
+  const {
+    data: entriesData,
+  } = useEntryList({ outcome: 'active', page_size: 50 });
+
+  // Build winning numbers from the draw data
+  const winningNumbers = useMemo(() => {
+    const numbers: string[] = [];
+    if (currentDraw?.winning_number_1) numbers.push(String(currentDraw.winning_number_1).padStart(10, '0'));
+    if (currentDraw?.winning_number_2) numbers.push(String(currentDraw.winning_number_2).padStart(10, '0'));
+    if (currentDraw?.winning_number_3) numbers.push(String(currentDraw.winning_number_3).padStart(10, '0'));
+    // Fallback for demo
+    if (numbers.length === 0) {
+      numbers.push('1234567890', '0987654321', '5678901234');
+    }
+    return numbers;
+  }, [currentDraw]);
+
+  // Extract user tickets from entries API response
+  const userTickets = useMemo(() => {
+    if (!entriesData?.fawz_entries_list) return [];
+    return entriesData.fawz_entries_list.map((entry) => entry.entry_number);
+  }, [entriesData]);
+
+  // Compare user tickets against winning numbers
+  const comparisonResult = useMemo(() => {
+    return compareTickets(winningNumbers, userTickets);
+  }, [winningNumbers, userTickets]);
+
+  // Get tier label for display
+  const getTierLabel = (tier: keyof typeof PRIZE_TIERS | null): string => {
+    if (!tier) return '';
+    const labels: Record<keyof typeof PRIZE_TIERS, string> = {
+      last_3: t('draw.tierLast3'),
+      last_5: t('draw.tierLast5'),
+      last_7: t('draw.tierLast7'),
+      last_10: t('draw.tierJackpot'),
+    };
+    return labels[tier];
+  };
 
   // Simulate WebSocket connection (in production, use real WebSocket)
   useEffect(() => {
@@ -289,54 +399,42 @@ export default function LiveDrawPage(): React.ReactElement {
     }
   }, [digitEvents]);
 
-  // Check for draw finalization
+  // Start animation when draw goes live
   useEffect(() => {
-    if (currentDraw?.status === 'finalized') {
-      // Check if user won (in production, this comes from the API)
-      // For now, simulate based on random
-      const didWin = Math.random() > 0.8; // 20% win rate for demo
-
-      if (didWin) {
-        setWinResult({ amount: 10000, tier: 'Last-3' });
-        setShowWinnerOverlay(true);
-      } else {
-        setShowNonWinnerOverlay(true);
-      }
+    if (currentDraw?.status === 'live') {
+      // Small delay before starting animation
+      const timeout = setTimeout(() => {
+        setIsAnimating(true);
+      }, 500);
+      return () => clearTimeout(timeout);
     }
+    return undefined;
   }, [currentDraw?.status]);
 
-  const handleShare = useCallback(() => {
-    navigate('/win-share');
-  }, [navigate]);
+  // Check for draw finalization and show result overlay
+  useEffect(() => {
+    if (currentDraw?.status === 'finalized' && !animationComplete) {
+      // Show result overlay after animation completes
+      const overlayTimeout = setTimeout(() => {
+        setShowResultOverlay(true);
+        setAnimationComplete(true);
+      }, 500 + (winningNumbers.length * 2000) + 1500);
 
-  const handleViewResults = useCallback(() => {
+      return () => clearTimeout(overlayTimeout);
+    }
+    return undefined;
+  }, [currentDraw?.status, winningNumbers.length, animationComplete]);
+
+  const handleShare = useCallback(() => {
     if (currentDraw) {
-      navigate(`/draws/${currentDraw.draw_id}`);
+      navigate(`/prizes/share/${currentDraw.draw_id}`);
     }
   }, [navigate, currentDraw]);
 
   const handleInviteFriends = useCallback(() => {
-    navigate('/referrals');
+    navigate('/referral');
   }, [navigate]);
 
-  // Build digit grid from events
-  const buildDigitGrid = (): (number | undefined)[][] => {
-    const grid: (number | undefined)[][] = [
-      Array(10).fill(undefined),
-      Array(10).fill(undefined),
-      Array(10).fill(undefined),
-    ];
-
-    liveState.revealedDigits.forEach((event) => {
-      if (event.number_index >= 0 && event.number_index < 3) {
-        if (event.digit_position >= 0 && event.digit_position < 10) {
-          grid[event.number_index][event.digit_position] = event.digit_value;
-        }
-      }
-    });
-
-    return grid;
-  };
 
   if (!isOnline) {
     return (
@@ -364,7 +462,7 @@ export default function LiveDrawPage(): React.ReactElement {
     );
   }
 
-  if (!currentDraw || currentDraw.status !== 'live') {
+  if (!currentDraw || (currentDraw.status !== 'live' && currentDraw.status !== 'finalized')) {
     return (
       <div className="p-4">
         <ErrorState
@@ -375,28 +473,18 @@ export default function LiveDrawPage(): React.ReactElement {
     );
   }
 
-  const digitGrid = buildDigitGrid();
-
   return (
     <div className="min-h-screen bg-surface-primary">
-      {/* Winner Overlay */}
-      {showWinnerOverlay && winResult && (
-        <WinnerOverlay
-          prizeAmount={winResult.amount}
-          tier={winResult.tier}
-          onShare={handleShare}
-          onViewResults={handleViewResults}
-        />
-      )}
-
-      {/* Non-Winner Overlay */}
-      {showNonWinnerOverlay && (
-        <NonWinnerOverlay
-          entryCount={47} // From user data
-          onInviteFriends={handleInviteFriends}
-          onViewResults={handleViewResults}
-        />
-      )}
+      {/* Result Overlay - shows actual comparison result */}
+      <DrawResultOverlay
+        type={comparisonResult.resultType}
+        prizeAmount={comparisonResult.totalPrize}
+        tier={getTierLabel(comparisonResult.bestTier)}
+        isVisible={showResultOverlay}
+        onShare={handleShare}
+        onInviteFriends={handleInviteFriends}
+        onClose={() => setShowResultOverlay(false)}
+      />
 
       <div className="p-4 space-y-6">
         {/* Header */}
@@ -418,17 +506,12 @@ export default function LiveDrawPage(): React.ReactElement {
               {currentDraw.draw_type === 'weekly' ? t('draw.weeklyDraw') : t('draw.monthlyDraw')}
             </h1>
             <p className="text-sm opacity-80 mb-3">
-              {new Date(currentDraw.draw_date).toLocaleDateString('ar-IQ', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
+              {formatLocalizedDate(currentDraw.draw_date, DATE_FORMAT_PRESETS.full, lang)}
             </p>
             <div className="flex items-center justify-center gap-2">
               <Trophy className="h-5 w-5" />
               <span className="text-2xl font-bold">
-                {formatCurrency(currentDraw.jackpot_rollover_iqd ?? 0)}
+                {formatCurrency(10000000, lang)}
               </span>
             </div>
           </CardContent>
@@ -442,17 +525,26 @@ export default function LiveDrawPage(): React.ReactElement {
           </span>
         </div>
 
-        {/* Digit Grid */}
-        <div className="space-y-6">
-          {digitGrid.map((row, rowIndex) => (
-            <WinningNumberRow
+        {/* Animated Digit Grid - Winning Tickets */}
+        <div className="space-y-4">
+          {winningNumbers.map((winningNumber, rowIndex) => (
+            <AnimatedWinningTicketRow
               key={rowIndex}
-              numberIndex={rowIndex + 1}
-              digits={row}
-              userMatchingDigits={0} // Calculate from user entries
+              ticketIndex={rowIndex + 1}
+              winningNumber={winningNumber}
+              isAnimating={isAnimating}
+              animationDelay={rowIndex * 1500}
             />
           ))}
         </div>
+
+        {/* User Ticket Comparison - 4th Row */}
+        <UserTicketComparisonRow
+          userTickets={userTickets}
+          winningNumbers={winningNumbers}
+          isAnimating={isAnimating}
+          animationDelay={(winningNumbers.length * 1500) + 500}
+        />
 
         {/* Pool Info */}
         <Card>
@@ -461,7 +553,7 @@ export default function LiveDrawPage(): React.ReactElement {
               {t('draw.entryPoolSize')}
             </p>
             <p className="text-2xl font-bold text-text-primary">
-              {currentDraw.entry_pool_size?.toLocaleString('ar-IQ') ?? '87,000,000'}
+              {currentDraw.entry_pool_size ? formatNumber(currentDraw.entry_pool_size, lang) : '87,000,000'}
             </p>
           </CardContent>
         </Card>

@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Menu, Bell, Globe, LogOut, User, ChevronDown } from 'lucide-react';
 import { cn } from '@/core/utils/cn';
@@ -15,6 +16,7 @@ import { type Language, LANGUAGES } from '@/core/i18n';
 
 export function Header(): JSX.Element {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
 
@@ -47,20 +49,17 @@ export function Header(): JSX.Element {
       )}
     >
       <div className="flex h-full items-center justify-between px-4">
-        {/* Left side */}
-        <div className="flex items-center gap-3">
-          {/* Mobile menu button */}
+        {/* Left side - Menu, Language, Notifications */}
+        <div className="flex items-center gap-2 flex-1">
+          {/* Tablet menu button - hidden on mobile (<768px) and desktop (>=1024px), visible on tablet only */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-bg-muted lg:hidden"
+            className="hidden md:block lg:hidden p-2 rounded-lg hover:bg-bg-muted"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </button>
-        </div>
 
-        {/* Right side */}
-        <div className="flex items-center gap-2">
           {/* Language Switcher */}
           <div className="relative">
             <button
@@ -79,7 +78,7 @@ export function Header(): JSX.Element {
                   className="fixed inset-0 z-10"
                   onClick={() => setShowLangMenu(false)}
                 />
-                <div className="absolute end-0 top-full mt-1 z-20 w-40 bg-bg-card rounded-lg shadow-elevated border border-border-default overflow-hidden">
+                <div className="absolute start-0 top-full mt-1 z-20 w-40 bg-bg-card rounded-lg shadow-elevated border border-border-default overflow-hidden">
                   {(Object.entries(LANGUAGES) as [Language, typeof LANGUAGES.ar][]).map(
                     ([code, { name }]) => (
                       <button
@@ -101,14 +100,27 @@ export function Header(): JSX.Element {
 
           {/* Notifications */}
           <button
-            className="p-2 rounded-lg hover:bg-bg-muted transition-colors relative"
+            onClick={() => navigate('/notifications')}
+            className="p-2 rounded-lg hover:bg-bg-muted transition-colors relative cursor-pointer"
             aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />
             {/* Notification badge */}
             <span className="absolute top-1 end-1 h-2 w-2 rounded-full bg-error" />
           </button>
+        </div>
 
+        {/* Center - Logo */}
+        <div className="flex items-center justify-center">
+          <img
+            src="/fawz-logo.png"
+            alt="Fawz"
+            className="h-12 w-auto object-contain"
+          />
+        </div>
+
+        {/* Right side - Profile only */}
+        <div className="flex items-center justify-end flex-1">
           {/* User Menu */}
           <div className="relative">
             <button

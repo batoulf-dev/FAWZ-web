@@ -37,6 +37,7 @@
   --color-brand-secondary: #F5A623;
   --color-brand-secondary-light: #FFD270;
   --color-brand-secondary-dark: #C88500;
+  --color-brand-gold: #D4A017;
 
   /* Background Colors */
   --color-bg-main: #F5F2ED;
@@ -160,6 +161,26 @@
       transform: translateX(100%);
     }
   }
+
+  /* Golden prize card shimmer effect */
+  .prize-card-shimmer {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 25%, #fbbf24 50%, #f59e0b 75%, #fbbf24 100%);
+    background-size: 200% 200%;
+    animation: golden-shimmer 3s ease infinite;
+  }
+
+  @keyframes golden-shimmer {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
 }
 
 /* Utility Layer */
@@ -192,5 +213,135 @@
   .select-none {
     user-select: none;
     -webkit-user-select: none;
+  }
+
+  /* Lottery Animation Keyframes */
+  @keyframes prizeConfetti {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(200px) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(0) rotate(0deg) scale(1);
+      opacity: 1;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg) scale(0.5);
+      opacity: 0;
+    }
+  }
+
+  @keyframes sparkle {
+    0%, 100% {
+      transform: scale(0) rotate(0deg);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1) rotate(180deg);
+      opacity: 1;
+    }
+  }
+
+  @keyframes star-burst {
+    0% {
+      transform: scale(0) rotate(0deg);
+      opacity: 0;
+    }
+    25% {
+      transform: scale(1.5) rotate(90deg);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1) rotate(180deg) translateY(20vh);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(0.5) rotate(360deg) translateY(100vh);
+      opacity: 0;
+    }
+  }
+
+  @keyframes number-spin {
+    0% {
+      transform: rotateX(0deg);
+    }
+    100% {
+      transform: rotateX(360deg);
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 20px 10px rgba(255, 215, 0, 0.2);
+    }
+  }
+
+  @keyframes shake {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: translateX(-2px);
+    }
+    20%, 40%, 60%, 80% {
+      transform: translateX(2px);
+    }
+  }
+
+  @keyframes float-up {
+    0% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-50px) scale(1.2);
+      opacity: 0;
+    }
+  }
+
+  .animate-confetti-fall {
+    animation: confetti-fall 3s ease-out forwards;
+  }
+
+  .animate-sparkle {
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+
+  .animate-star-burst {
+    animation: star-burst 2.5s ease-out forwards;
+  }
+
+  .animate-number-spin {
+    animation: number-spin 0.1s linear infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 1.5s ease-in-out infinite;
+  }
+
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  .animate-float-up {
+    animation: float-up 1s ease-out forwards;
+  }
+
+  /* Radial gradient for jackpot effect */
+  .bg-gradient-radial {
+    background: radial-gradient(circle at center, var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to));
   }
 }

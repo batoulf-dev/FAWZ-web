@@ -16,12 +16,13 @@ import { OfflineBanner } from '@/shared/components/OfflineBanner';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
 import { useMyWins, usePrizeSummary } from '../services/prizes.service';
-import { formatCurrency } from '@/core/utils/formatters';
+import { formatCurrency, formatLocalizedDate } from '@/core/utils/formatters';
 import type { PayoutStatus, PrizePayout } from '../types/prizes.types';
 
 // Summary card component
 function PrizeSummaryCard({ totalWins, totalAmount }: { totalWins: number; totalAmount: number }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
 
   return (
     <Card className="bg-gradient-to-r from-brand-gold/10 to-brand-primary/10">
@@ -35,7 +36,7 @@ function PrizeSummaryCard({ totalWins, totalAmount }: { totalWins: number; total
               {t('prize.lifetimeWinnings')}
             </p>
             <p className="text-3xl font-bold text-brand-gold">
-              {formatCurrency(totalAmount)}
+              {formatCurrency(totalAmount, lang)}
             </p>
             <p className="text-sm text-text-secondary">
               {totalWins} {t('prize.timesWon')}
@@ -63,7 +64,8 @@ function PrizeRow({
   payoutStatus: PayoutStatus;
   onTap: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
 
   const statusConfig: Record<
     PayoutStatus,
@@ -116,12 +118,12 @@ function PrizeRow({
     'jackpot': t('prize.tierJackpot'),
   };
 
-  const formattedDate = new Date(drawDate).toLocaleDateString('ar-IQ', {
+  const formattedDate = formatLocalizedDate(drawDate, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-  });
+  }, lang);
 
   const isPaid = payoutStatus === 'completed';
 
@@ -151,7 +153,7 @@ function PrizeRow({
 
         <div className="flex items-center justify-between">
           <p className="text-2xl font-bold text-brand-gold">
-            {formatCurrency(amount)}
+            {formatCurrency(amount, lang)}
           </p>
           <Badge className={config.color}>
             {config.icon}

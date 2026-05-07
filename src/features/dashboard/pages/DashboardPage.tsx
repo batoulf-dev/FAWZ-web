@@ -6,7 +6,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { Bell, Gift, Users, ChevronLeft, Trophy, Ticket } from 'lucide-react';
+import { Bell, Gift, Users, ChevronLeft, Trophy, TicketCheck } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
 import { Skeleton } from '@/shared/components/Skeleton';
@@ -148,9 +148,9 @@ function EntryCountHero({ count, onTap }: { count: number; onTap: () => void }) 
       onClick={onTap}
     >
       <CardContent className="p-6 text-center">
-        <Ticket className="h-8 w-8 text-brand-gold mx-auto mb-2" />
+        <TicketCheck className="h-8 w-8 text-brand-gold mx-auto mb-2" />
         <p className="text-5xl font-bold text-brand-gold mb-1">{count}</p>
-        <p className="text-text-secondary">{t('entries.myNumbers')}</p>
+        <p className="text-text-secondary">{t('tickets.myTickets')}</p>
       </CardContent>
     </Card>
   );
@@ -277,28 +277,31 @@ export default function DashboardPage(): React.ReactElement {
           </Card>
         )}
 
-        {/* Draw Countdown */}
-        {nextDraw && !isLiveDraw && (
-          <DrawCountdown
-            drawDate={nextDraw.draw_date}
-            jackpot={nextDraw.jackpot_rollover_iqd ?? 0}
-            drawType={nextDraw.draw_type}
-          />
-        )}
+        {/* Draw Countdown & Entry Count - Side by Side on Tablet+ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+          {/* Draw Countdown */}
+          {nextDraw && !isLiveDraw && (
+            <DrawCountdown
+              drawDate={nextDraw.draw_date}
+              jackpot={nextDraw.jackpot_rollover_iqd ?? 0}
+              drawType={nextDraw.draw_type}
+            />
+          )}
 
-        {/* Entry Count Hero */}
-        {isNewUser ? (
-          <EmptyState
-            icon={<Ticket className="h-12 w-12" />}
-            title={t('entries.noEntriesYet')}
-            description={t('entries.startPayingToEarn')}
-          />
-        ) : (
-          <EntryCountHero
-            count={entryCount}
-            onTap={() => navigate('/my-numbers')}
-          />
-        )}
+          {/* Entry Count Hero */}
+          {isNewUser ? (
+            <EmptyState
+              icon={<TicketCheck className="h-12 w-12" />}
+              title={t('entries.noEntriesYet')}
+              description={t('entries.startPayingToEarn')}
+            />
+          ) : (
+            <EntryCountHero
+              count={entryCount}
+              onTap={() => navigate('/entries')}
+            />
+          )}
+        </div>
 
         {/* Weekly Spark Progress */}
         <div>
@@ -353,7 +356,7 @@ export default function DashboardPage(): React.ReactElement {
         {/* Referral Teaser */}
         <Card
           className="bg-gradient-to-r from-brand-secondary/10 to-brand-primary/10 cursor-pointer"
-          onClick={() => navigate('/referrals')}
+          onClick={() => navigate('/referral')}
         >
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">

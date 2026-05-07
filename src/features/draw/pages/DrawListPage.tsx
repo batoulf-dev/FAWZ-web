@@ -17,7 +17,7 @@ import { OfflineBanner } from '@/shared/components/OfflineBanner';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
 import { useDrawList } from '../services/draw.service';
-import { formatCurrency } from '@/core/utils/formatters';
+import { formatCurrency, formatLocalizedDate, formatNumber, DATE_FORMAT_PRESETS } from '@/core/utils/formatters';
 import type { DrawType } from '../types/draw.types';
 
 // Filter tabs
@@ -42,14 +42,10 @@ function DrawRow({
   userPrize,
   onTap,
 }: DrawRowProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
 
-  const formattedDate = new Date(drawDate).toLocaleDateString('ar-IQ', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const formattedDate = formatLocalizedDate(drawDate, DATE_FORMAT_PRESETS.full, lang);
 
   return (
     <Card
@@ -80,13 +76,13 @@ function DrawRow({
           <div className="flex items-center gap-2 text-text-secondary">
             <Users className="h-4 w-4" />
             <span className="text-sm">
-              {totalWinners.toLocaleString('ar-IQ')} {t('draw.winners')}
+              {formatNumber(totalWinners, lang)} {t('draw.winners')}
             </span>
           </div>
           <div className="text-end">
             <p className="text-xs text-text-muted">{t('draw.totalPayout')}</p>
             <p className="font-semibold text-text-primary">
-              {formatCurrency(totalPayout)}
+              {formatCurrency(totalPayout, lang)}
             </p>
           </div>
         </div>
@@ -96,7 +92,7 @@ function DrawRow({
             <div className="flex items-center justify-between">
               <span className="text-sm text-text-secondary">{t('draw.yourPrize')}</span>
               <span className="font-bold text-brand-gold">
-                {formatCurrency(userPrize)}
+                {formatCurrency(userPrize, lang)}
               </span>
             </div>
           </div>
@@ -130,8 +126,8 @@ function FilterTabs({
           className={`
             px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
             ${activeFilter === filter.value
-              ? 'bg-brand-primary text-white'
-              : 'bg-surface-secondary text-text-secondary hover:bg-surface-tertiary'
+              ? 'bg-[#FFC107] text-zinc-900'
+              : 'bg-bg-muted text-text-secondary hover:bg-bg-muted/80'
             }
           `}
         >
@@ -223,7 +219,7 @@ export default function DrawListPage(): React.ReactElement {
           <h1 className="text-xl font-bold text-text-primary">
             {t('draw.results')}
           </h1>
-          <Trophy className="h-6 w-6 text-brand-primary" />
+          <Trophy className="h-6 w-6 text-[#FFC107]" />
         </div>
 
         {/* Filter Tabs */}

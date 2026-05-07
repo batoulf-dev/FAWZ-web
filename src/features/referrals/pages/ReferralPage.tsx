@@ -14,6 +14,7 @@ import { ErrorState } from '@/shared/components/ErrorState';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
 import { useMyReferralLink, useReferralStats, useReferralShareData } from '../services/referrals.service';
+import { formatNumber } from '@/core/utils/formatters';
 import toast from 'react-hot-toast';
 
 // Stats card component
@@ -26,7 +27,8 @@ function StatsCard({
   entries: number;
   cash: number;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
 
   return (
     <div className="grid grid-cols-3 gap-4">
@@ -49,7 +51,7 @@ function StatsCard({
       <Card>
         <CardContent className="p-3 text-center">
           <p className="text-2xl font-bold text-brand-primary">
-            {cash.toLocaleString('ar-IQ')}
+            {formatNumber(cash, lang)}
           </p>
           <p className="text-xs text-text-secondary">
             {t('referral.cashEarned')}
@@ -317,7 +319,7 @@ export default function ReferralPage(): React.ReactElement {
 
         {/* View History Link */}
         <button
-          onClick={() => navigate('/referrals/history')}
+          onClick={() => navigate('/referral/history')}
           className="w-full py-3 text-center text-brand-primary font-medium flex items-center justify-center gap-1"
         >
           {t('referral.viewHistory')}

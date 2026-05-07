@@ -119,11 +119,45 @@ export function useMarkNotificationRead() {
   return useMutation({
     mutationFn: (id: string) =>
       markNotificationAsRead(id, { is_read: true, read_at: new Date().toISOString() }),
-    onSuccess: () => {
-      // Invalidate notifications list and unread count
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() });
+    onMutate: async (notificationId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: notificationKeys.lists() });
+
+      // Snapshot all cached notification lists
+      const previousLists = queryClient.getQueriesData<NotificationListResponse>({
+        queryKey: notificationKeys.lists(),
+      });
+
+      // Optimistically update all cached lists
+      queryClient.setQueriesData<NotificationListResponse>(
+        { queryKey: notificationKeys.lists() },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            notifications_list: old.notifications_list.map((notification) =>
+              notification.notification_id === notificationId
+                ? { ...notification, is_read: true, read_at: new Date().toISOString() }
+                : notification,
+            ),
+          };
+        },
+      );
+
+      return { previousLists };
     },
+    onError: (_err, _variables, context) => {
+      // Rollback on error
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          if (data) {
+            queryClient.setQueryData(queryKey, data);
+          }
+        });
+      }
+    },
+    // Note: We don't invalidate on success since optimistic update is sufficient
+    // and the mock API doesn't persist state changes
   });
 }
 
@@ -206,8 +240,7 @@ export function useUpdateNotificationPreference() {
         queryClient.setQueryData(notificationKeys.preferencesList(), context.previousPreferences);
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.preferencesList() });
-    },
+    // Note: We don't invalidate on success since optimistic update is sufficient
+    // and the mock API doesn't persist state changes
   });
 }

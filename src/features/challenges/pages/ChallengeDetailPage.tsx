@@ -16,6 +16,7 @@ import { OfflineBanner } from '@/shared/components/OfflineBanner';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
 import { useChallenge, useChallengeProgress, useClaimCheckpoint } from '../services/challenges.service';
+import { formatNumber } from '@/core/utils/formatters';
 import toast from 'react-hot-toast';
 
 // Progress bar with checkpoints
@@ -121,7 +122,8 @@ function ChallengeDetailSkeleton() {
 }
 
 export default function ChallengeDetailPage(): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const navigate = useNavigate();
   const { challengeId } = useParams<{ challengeId: string }>();
   const isOnline = useNetworkStatus();
@@ -338,7 +340,7 @@ export default function ChallengeDetailPage(): React.ReactElement {
                 )}
                 {challenge.reward_cash_iqd > 0 && (
                   <p className="text-lg font-bold text-brand-gold">
-                    +{challenge.reward_cash_iqd.toLocaleString('ar-IQ')} IQD
+                    +{formatNumber(challenge.reward_cash_iqd, lang)} IQD
                   </p>
                 )}
               </div>

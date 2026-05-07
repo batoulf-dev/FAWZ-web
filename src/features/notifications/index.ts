@@ -13,7 +13,6 @@ export {
   useNotification,
   useUnreadNotificationCount,
   useMarkNotificationRead,
-  useMarkAllNotificationsRead,
   useNotificationPreferences,
   useUpdateNotificationPreference,
 } from './services/notifications.service';

@@ -8,6 +8,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, AuthTokens } from '@/core/types/api.types';
 import { setTokens, clearTokens } from '@/core/network/apiClient';
+import { mockUser as fixtureUser, mockAuthTokens } from '@/test/fixtures';
 
 interface AuthState {
   // State
@@ -76,21 +77,11 @@ export const useAuthStore = create<AuthState>()(
 
       // Mock login for development testing only
       mockLogin: () => {
-        const mockToken = 'mock-token-for-dev';
-        const mockUser: User = {
-          id: '550e8400-e29b-41d4-a716-446655440000',
-          phone: '+9647700000000',
-          name: 'Batoul Test',
-          email: 'normaluser.20260506@fawz.com',
-          is_verified: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setTokens(mockToken, undefined);
+        setTokens(mockAuthTokens.access_token, mockAuthTokens.refresh_token);
         set({
-          user: mockUser,
-          accessToken: mockToken,
-          refreshToken: null,
+          user: fixtureUser,
+          accessToken: mockAuthTokens.access_token,
+          refreshToken: mockAuthTokens.refresh_token ?? null,
           isAuthenticated: true,
           isLoading: false,
         });

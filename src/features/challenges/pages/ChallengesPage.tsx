@@ -18,6 +18,7 @@ import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
 import { useActiveChallenges, useOnboardingChallenges } from '../services/challenges.service';
 import { useAuthStore } from '@/stores/auth.store';
+import { formatNumber } from '@/core/utils/formatters';
 import type { ChallengeWithProgress } from '../types/challenges.types';
 
 // Challenge card component
@@ -28,7 +29,8 @@ function ChallengeCard({
   challenge: ChallengeWithProgress;
   onTap: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
 
   const progress = challenge.userProgress?.current_value ?? 0;
   const target = challenge.target_value;
@@ -40,7 +42,7 @@ function ChallengeCard({
     ? `+${challenge.reward_entries} ${t('entries.numbers')}`
     : '';
   const cashReward = challenge.reward_cash_iqd
-    ? `+${challenge.reward_cash_iqd.toLocaleString('ar-IQ')} IQD`
+    ? `+${formatNumber(challenge.reward_cash_iqd, lang)} IQD`
     : '';
 
   return (
@@ -245,7 +247,7 @@ export default function ChallengesPage(): React.ReactElement {
           <h1 className="text-xl font-bold text-text-primary">
             {t('challenge.challenges')}
           </h1>
-          <Trophy className="h-6 w-6 text-brand-primary" />
+          <Trophy className="h-6 w-6 text-[#FFC107]" />
         </div>
 
         {/* Onboarding Progress (for new users) */}

@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Ticket, Trophy, Gift, ChevronLeft, Calendar } from 'lucide-react';
+import { TicketCheck, Trophy, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Skeleton } from '@/shared/components/Skeleton';
@@ -17,6 +17,7 @@ import { OfflineBanner } from '@/shared/components/OfflineBanner';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
 import { useInfiniteEntries, useEntrySummary } from '../services/entries.service';
+import { formatNumber, formatLocalizedDate } from '@/core/utils/formatters';
 import type { EntrySource, EntryOutcome } from '../types/entries.types';
 
 // Filter type
@@ -25,53 +26,78 @@ type FilterType = 'all' | 'transaction' | 'challenge' | 'referral';
 // Summary stats card
 function EntrySummaryCard({
   weekCount,
+  activeCount,
   totalCount,
 }: {
   weekCount: number;
+  activeCount: number;
   totalCount: number;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
 
   return (
     <Card className="bg-gradient-to-r from-brand-gold/10 to-brand-primary/10">
       <CardContent className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-brand-gold/10 rounded-xl">
-            <Ticket className="h-6 w-6 text-brand-gold" />
+        <div className="grid grid-cols-2 gap-4">
+          {/* This Week */}
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-brand-gold/10 rounded-xl">
+              <Calendar className="h-5 w-5 text-brand-gold" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-text-primary">
+                {formatNumber(weekCount, lang)}
+              </p>
+              <p className="text-xs text-text-secondary">
+                {t('entries.thisWeek')}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-2xl font-bold text-text-primary">
-              {weekCount.toLocaleString('ar-IQ')}
-            </p>
-            <p className="text-sm text-text-secondary">
-              {t('entries.thisWeek')} — {totalCount.toLocaleString('ar-IQ')} {t('entries.total')}
-            </p>
+
+          {/* Active Tickets */}
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-brand-primary/10 rounded-xl">
+              <TicketCheck className="h-5 w-5 text-brand-primary" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-text-primary">
+                {formatNumber(activeCount, lang)}
+              </p>
+              <p className="text-xs text-text-secondary">
+                {t('entries.activeTickets')}
+              </p>
+            </div>
           </div>
+        </div>
+
+        {/* Total lifetime */}
+        <div className="mt-3 pt-3 border-t border-border-default">
+          <p className="text-sm text-text-secondary text-center">
+            {t('entries.lifetime')}: {formatNumber(totalCount, lang)} {t('entries.total')}
+          </p>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-// Entry row component
+// Entry row component (non-interactive display card)
 function EntryRow({
   entryNumber,
   source,
   drawWeek,
   createdAt,
   outcome,
-  prizeIqd,
-  onTap,
 }: {
   entryNumber: string;
   source: EntrySource;
   drawWeek: string;
   createdAt: string;
   outcome?: EntryOutcome;
-  prizeIqd?: number;
-  onTap?: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
 
   const sourceLabels: Record<EntrySource, string> = {
     transaction: t('entries.sourceTransaction'),
@@ -91,7 +117,7 @@ function EntryRow({
     onboarding: 'bg-blue-100 text-blue-600',
   };
 
-  const formatNumber = (num: string) => {
+  const formatEntryNumber = (num: string) => {
     // Format as XXXX-XX-XXXX
     if (num.length === 10) {
       return `${num.slice(0, 4)}-${num.slice(4, 6)}-${num.slice(6)}`;
@@ -99,24 +125,23 @@ function EntryRow({
     return num;
   };
 
-  const relativeTime = new Date(createdAt).toLocaleDateString('ar-IQ', {
+  const relativeTime = formatLocalizedDate(createdAt, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  });
+  }, lang);
 
   const isWinner = outcome === 'won';
 
   return (
     <Card
-      className={`cursor-pointer hover:shadow-md transition-shadow ${isWinner ? 'border-brand-gold border-2' : ''}`}
-      onClick={onTap}
+      className="pointer-events-none select-none"
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="font-mono text-lg font-bold text-text-primary">
-            {formatNumber(entryNumber)}
+            {formatEntryNumber(entryNumber)}
           </div>
           {isWinner && (
             <Badge variant="success" className="bg-brand-gold text-white">
@@ -131,6 +156,9 @@ function EntryRow({
           {outcome === 'active' && (
             <Badge className="border border-border-primary bg-transparent">{t('entries.active')}</Badge>
           )}
+          {outcome === 'lost' && (
+            <Badge className="bg-gray-100 text-gray-500">{t('entries.lost')}</Badge>
+          )}
         </div>
 
         <div className="flex items-center justify-between text-sm text-text-secondary">
@@ -141,19 +169,6 @@ function EntryRow({
           <span>{drawWeek}</span>
         </div>
 
-        {isWinner && prizeIqd && (
-          <div className="mt-3 pt-3 border-t border-border-primary">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 text-brand-gold">
-                <Gift className="h-4 w-4" />
-                <span className="font-semibold">
-                  {prizeIqd.toLocaleString('ar-IQ')} IQD
-                </span>
-              </div>
-              <ChevronLeft className="h-4 w-4 text-text-muted rtl:rotate-180" />
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
@@ -184,8 +199,8 @@ function FilterTabs({
           className={`
             px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
             ${activeFilter === filter.value
-              ? 'bg-brand-primary text-white'
-              : 'bg-surface-secondary text-text-secondary hover:bg-surface-tertiary'
+              ? 'bg-[#FFC107] text-zinc-900'
+              : 'bg-bg-muted text-text-secondary hover:bg-bg-muted/80'
             }
           `}
         >
@@ -223,7 +238,7 @@ export default function MyNumbersPage(): React.ReactElement {
   const isOnline = useNetworkStatus();
   const [filter, setFilter] = useState<FilterType>('all');
 
-  usePageTitle(t('entries.myNumbers'));
+  usePageTitle(t('tickets.myTickets'));
 
   const {
     data: summary,
@@ -252,18 +267,12 @@ export default function MyNumbersPage(): React.ReactElement {
     }
   };
 
-  const handleEntryTap = (entry: typeof entries[0]) => {
-    if (entry.outcome === 'won' && entry.outcome_draw_id) {
-      navigate(`/draws/${entry.outcome_draw_id}`);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-surface-primary">
         <div className="p-4">
           <h1 className="text-xl font-bold text-text-primary mb-4">
-            {t('entries.myNumbers')}
+            {t('tickets.myTickets')}
           </h1>
           <EntryListSkeleton />
         </div>
@@ -290,15 +299,16 @@ export default function MyNumbersPage(): React.ReactElement {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-text-primary">
-            {t('entries.myNumbers')}
+            {t('tickets.myTickets')}
           </h1>
-          <Ticket className="h-6 w-6 text-brand-gold" />
+          <TicketCheck className="h-6 w-6 text-brand-gold" />
         </div>
 
         {/* Summary Card */}
         {summary && (
           <EntrySummaryCard
             weekCount={summary.entries_this_week}
+            activeCount={summary.active_entries}
             totalCount={summary.total_entries}
           />
         )}
@@ -309,7 +319,7 @@ export default function MyNumbersPage(): React.ReactElement {
         {/* Entry List */}
         {entries.length === 0 ? (
           <EmptyState
-            icon={<Ticket className="h-12 w-12" />}
+            icon={<TicketCheck className="h-12 w-12" />}
             title={t('entries.noEntriesYet')}
             description={t('entries.startPayingToEarn')}
             actionLabel={t('entries.learnHow')}
@@ -325,8 +335,6 @@ export default function MyNumbersPage(): React.ReactElement {
                 drawWeek={entry.draw_week ?? ''}
                 createdAt={entry.created_at}
                 outcome={entry.outcome}
-                prizeIqd={entry.prize_iqd}
-                onTap={() => handleEntryTap(entry)}
               />
             ))}
 

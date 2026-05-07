@@ -11,6 +11,13 @@ import {
 } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 
+/**
+ * Get the full locale string based on language code
+ */
+export function getLocaleString(lang: string): string {
+  return lang === 'ar' || lang.startsWith('ar-') ? 'ar-IQ' : 'en-US';
+}
+
 // IQD currency formatting
 const IQD_FORMATTER = new Intl.NumberFormat('ar-IQ', {
   style: 'currency',
@@ -19,7 +26,7 @@ const IQD_FORMATTER = new Intl.NumberFormat('ar-IQ', {
   maximumFractionDigits: 0,
 });
 
-const IQD_FORMATTER_EN = new Intl.NumberFormat('en-IQ', {
+const IQD_FORMATTER_EN = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'IQD',
   minimumFractionDigits: 0,
@@ -27,13 +34,21 @@ const IQD_FORMATTER_EN = new Intl.NumberFormat('en-IQ', {
 });
 
 /**
+ * Normalize language code to 'ar' or 'en'
+ */
+function normalizeLocale(locale: string): 'ar' | 'en' {
+  return locale === 'ar' || locale.startsWith('ar-') ? 'ar' : 'en';
+}
+
+/**
  * Format amount as Iraqi Dinar
  */
 export function formatCurrency(
   amount: number,
-  locale: 'ar' | 'en' = 'ar',
+  locale: string = 'ar',
 ): string {
-  const formatter = locale === 'ar' ? IQD_FORMATTER : IQD_FORMATTER_EN;
+  const normalized = normalizeLocale(locale);
+  const formatter = normalized === 'ar' ? IQD_FORMATTER : IQD_FORMATTER_EN;
   return formatter.format(amount);
 }
 
@@ -42,9 +57,10 @@ export function formatCurrency(
  */
 export function formatNumber(
   value: number,
-  locale: 'ar' | 'en' = 'ar',
+  locale: string = 'ar',
 ): string {
-  return new Intl.NumberFormat(locale === 'ar' ? 'ar-IQ' : 'en-US').format(
+  const normalized = normalizeLocale(locale);
+  return new Intl.NumberFormat(normalized === 'ar' ? 'ar-IQ' : 'en-US').format(
     value,
   );
 }
@@ -55,11 +71,12 @@ export function formatNumber(
 export function formatDate(
   date: string | Date,
   formatStr: string = 'PPP',
-  locale: 'ar' | 'en' = 'ar',
+  locale: string = 'ar',
 ): string {
+  const normalized = normalizeLocale(locale);
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
   return format(dateObj, formatStr, {
-    locale: locale === 'ar' ? ar : enUS,
+    locale: normalized === 'ar' ? ar : enUS,
   });
 }
 
@@ -68,12 +85,13 @@ export function formatDate(
  */
 export function formatRelativeTime(
   date: string | Date,
-  locale: 'ar' | 'en' = 'ar',
+  locale: string = 'ar',
 ): string {
+  const normalized = normalizeLocale(locale);
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
   return formatDistanceToNow(dateObj, {
     addSuffix: true,
-    locale: locale === 'ar' ? ar : enUS,
+    locale: normalized === 'ar' ? ar : enUS,
   });
 }
 
@@ -150,3 +168,79 @@ export function formatFileSize(bytes: number): string {
 
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
+
+/**
+ * Format date using native toLocaleDateString with dynamic locale
+ * Use this for simple date formatting without date-fns
+ */
+export function formatLocalizedDate(
+  date: string | Date,
+  options: Intl.DateTimeFormatOptions,
+  locale: string = 'ar',
+): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleDateString(getLocaleString(locale), options);
+}
+
+/**
+ * Format IQD amount with abbreviations for large numbers
+ * >= 1 billion: "X.X مليار IQD" / "X.X billion IQD"
+ * >= 1 million: "X.X مليون IQD" / "X.X million IQD"
+ * Otherwise: comma-formatted
+ */
+export function formatIQDAbbreviated(
+  amount: number,
+  locale: string = 'ar',
+): string {
+  const normalized = normalizeLocale(locale);
+  const billion = 1_000_000_000;
+  const million = 1_000_000;
+
+  if (amount >= billion) {
+    const value = amount / billion;
+    const formatted = value % 1 === 0 ? value.toString() : value.toFixed(1);
+    return normalized === 'ar'
+      ? `${formatted} مليار د.ع`
+      : `${formatted} billion IQD`;
+  }
+
+  if (amount >= million) {
+    const value = amount / million;
+    const formatted = value % 1 === 0 ? value.toString() : value.toFixed(1);
+    return normalized === 'ar'
+      ? `${formatted} مليون د.ع`
+      : `${formatted} million IQD`;
+  }
+
+  return formatCurrency(amount, locale);
+}
+
+/**
+ * Common date format presets for convenience
+ */
+export const DATE_FORMAT_PRESETS = {
+  /** e.g., "الخميس، 21 مارس 2024" or "Thursday, March 21, 2024" */
+  full: {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  } as Intl.DateTimeFormatOptions,
+  /** e.g., "21 مارس 2024" or "March 21, 2024" */
+  long: {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  } as Intl.DateTimeFormatOptions,
+  /** e.g., "21 مارس" or "March 21" */
+  medium: {
+    day: 'numeric',
+    month: 'long',
+  } as Intl.DateTimeFormatOptions,
+  /** e.g., "21/03/2024" or "03/21/2024" */
+  short: {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  } as Intl.DateTimeFormatOptions,
+} as const;

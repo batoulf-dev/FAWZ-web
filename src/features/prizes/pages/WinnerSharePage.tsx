@@ -11,7 +11,7 @@ import { Button } from '@/shared/components/Button';
 import { ErrorState } from '@/shared/components/ErrorState';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { useNetworkStatus } from '@/shared/hooks/useNetworkStatus';
-import { formatCurrency } from '@/core/utils/formatters';
+import { formatCurrency, formatLocalizedDate, DATE_FORMAT_PRESETS } from '@/core/utils/formatters';
 import toast from 'react-hot-toast';
 
 // Winner share card component (pre-rendered for sharing)
@@ -28,7 +28,8 @@ function WinnerShareCard({
   drawDate: string;
   matchingDigits: number;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const digits = entryNumber.split('');
 
   return (
@@ -47,7 +48,7 @@ function WinnerShareCard({
 
       {/* Prize Amount */}
       <div className="bg-white/10 rounded-xl p-4 mb-4 text-center">
-        <p className="text-4xl font-bold mb-1">{formatCurrency(prizeAmount)}</p>
+        <p className="text-4xl font-bold mb-1">{formatCurrency(prizeAmount, lang)}</p>
         <p className="text-sm opacity-80">{tier}</p>
       </div>
 
@@ -94,7 +95,8 @@ function WinnerShareCard({
 }
 
 export default function WinnerSharePage(): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const navigate = useNavigate();
   const location = useLocation();
   const isOnline = useNetworkStatus();
@@ -115,19 +117,14 @@ export default function WinnerSharePage(): React.ReactElement {
     entryNumber: winData?.entryNumber ?? '1234567890',
     prizeAmount: winData?.prizeAmount ?? 10000,
     tier: winData?.tier ?? 'Last-3',
-    drawDate: winData?.drawDate ?? new Date().toLocaleDateString('ar-IQ', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }),
+    drawDate: winData?.drawDate ?? formatLocalizedDate(new Date(), DATE_FORMAT_PRESETS.full, lang),
     matchingDigits: winData?.matchingDigits ?? 3,
   };
 
   const handleShare = async () => {
     try {
       // Create share data
-      const shareText = `🎉 ${t('share.iWon')} ${formatCurrency(shareData.prizeAmount)} ${t('share.withFawz')}!\n\n${t('share.joinNow')}`;
+      const shareText = `🎉 ${t('share.iWon')} ${formatCurrency(shareData.prizeAmount, lang)} ${t('share.withFawz')}!\n\n${t('share.joinNow')}`;
 
       if (navigator.share) {
         await navigator.share({
@@ -150,7 +147,7 @@ export default function WinnerSharePage(): React.ReactElement {
 
   const handleWhatsAppShare = () => {
     const message = encodeURIComponent(
-      `🎉 ${t('share.iWon')} ${formatCurrency(shareData.prizeAmount)} ${t('share.withFawz')}!\n\n${t('share.joinNow')}`
+      `🎉 ${t('share.iWon')} ${formatCurrency(shareData.prizeAmount, lang)} ${t('share.withFawz')}!\n\n${t('share.joinNow')}`
     );
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
