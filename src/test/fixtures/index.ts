@@ -82,22 +82,26 @@ export const mockDraw: Draw = {
   entry_pool_snapshot_at: '2024-03-21T19:00:00Z',
   broadcast_started_at: '2024-03-21T20:00:00Z',
   finalized_at: '2024-03-21T20:30:00Z',
+  // Updated winning numbers for comprehensive testing:
+  // winning_number_1: Last-3=890, Last-5=67890, Last-7=4567890, Last-10=1234567890
+  // winning_number_2: Last-3=210, Last-5=43210, Last-7=6543210, Last-10=9876543210
+  // winning_number_3: Last-3=345, Last-5=12345, Last-7=5512345, Last-10=5555512345
   winning_numbers: '1234567890',
   winning_number_1: 1234567890,
-  winning_number_2: 2345678901,
-  winning_number_3: 3456789012,
+  winning_number_2: 9876543210,
+  winning_number_3: 5555512345,
   prize_tier_last_3_iqd: 25000,
   prize_tier_last_5_iqd: 250000,
   prize_tier_last_7_iqd: 2500000,
   prize_tier_last_10_iqd: 25000000,
   jackpot_amount_iqd: 100000000,
   jackpot_rollover_iqd: 0,
-  jackpot_claimed: false,
-  jackpot_winners_count: 0,
-  total_winners: 156,
-  total_payout_iqd: 15600000,
-  consumer_winners: 140,
-  consumer_payout_iqd: 14000000,
+  jackpot_claimed: true,
+  jackpot_winners_count: 2,
+  total_winners: 164,
+  total_payout_iqd: 65850000,
+  consumer_winners: 148,
+  consumer_payout_iqd: 64250000,
   merchant_winners: 16,
   merchant_payout_iqd: 1600000,
   physical_draw_mismatch: false,
@@ -123,32 +127,320 @@ export const mockDrawList: DrawListResponse = {
       status: 'scheduled',
       finalized_at: undefined,
     },
+    {
+      ...mockDraw,
+      draw_id: '660e8400-e29b-41d4-a716-446655440004',
+      draw_number: 5,
+      draw_type: 'monthly',
+      draw_date: '2024-03-01',
+      status: 'finalized',
+      prize_tier_last_3_iqd: 50000,
+      prize_tier_last_5_iqd: 500000,
+      prize_tier_last_7_iqd: 5000000,
+    },
+    {
+      ...mockDraw,
+      draw_id: '660e8400-e29b-41d4-a716-446655440005',
+      draw_number: 4,
+      draw_type: 'monthly',
+      draw_date: '2024-02-01',
+      status: 'finalized',
+      prize_tier_last_3_iqd: 50000,
+      prize_tier_last_5_iqd: 500000,
+      prize_tier_last_7_iqd: 5000000,
+    },
   ],
-  total_draws: 3,
+  total_draws: 5,
   page: 1,
   page_size: 20,
 };
 
-export const mockDrawWinner: DrawWinner = {
+// ===========================================
+// DrawWinner Fixtures - Comprehensive Coverage
+// Entry IDs are inlined to avoid forward reference issues
+// ===========================================
+
+// Winner #1: User's own jackpot win (Last-10, winning_number_1)
+// This is the authenticated mock user's win for "your win" highlighting
+// Weekly cap = 1,000,000 IQD; prize = 50M IQD → held due to cap exceeded
+export const mockDrawWinnerUserJackpot: DrawWinner = {
   draw_winner_id: '880e8400-e29b-41d4-a716-446655440001',
   tenant_id: '770e8400-e29b-41d4-a716-446655440001',
   draw_id: mockDraw.draw_id,
-  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440001',
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440001', // mockEntry
   consumer_user_id: mockUser.id,
+  owner_id: mockUser.id,
+  owner_type: 'user',
   entry_number: '1234567890',
+  digits_matched: 10,
+  prize_tier: 'last_10',
+  prize_iqd: 50000000, // Split jackpot (100M / 2)
+  winning_number_index: 1,
+  winning_number: 1234567890,
+  is_jackpot: true,
+  jackpot_split_count: 2,
+  original_prize_amount_iqd: 100000000,
+  payout_status: 'held_cap_exceeded',
+  payout_held_reason: 'Weekly payout cap exceeded (1,000,000 IQD limit)',
+  requires_compliance_review: true,
+  cap_exceeded: true,
+  cap_exceeded_amount_iqd: 49000000, // 50M - 1M cap = 49M excess
+  created_at: '2024-03-21T20:30:00Z',
+  updated_at: '2024-03-21T21:00:00Z',
+};
+
+// Winner #2: Last-3 match on winning_number_1 (890)
+export const mockDrawWinnerLast3Win1: DrawWinner = {
+  draw_winner_id: '880e8400-e29b-41d4-a716-446655440010',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  draw_id: mockDraw.draw_id,
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440010', // mockEntryLast3Win1
+  consumer_user_id: 'user-other-001',
+  owner_id: 'user-other-001',
+  owner_type: 'user',
+  entry_number: '1111111890',
+  digits_matched: 3,
+  prize_tier: 'last_3',
+  prize_iqd: 25000,
+  winning_number_index: 1,
+  winning_number: 1234567890,
+  is_jackpot: false,
+  payout_status: 'completed',
+  payout_processed_at: '2024-03-22T11:00:00Z',
+  requires_compliance_review: false,
+  cap_exceeded: false,
+  created_at: '2024-03-21T20:30:00Z',
+  updated_at: '2024-03-22T11:00:00Z',
+};
+
+// Winner #3: Last-5 match on winning_number_1 (67890)
+export const mockDrawWinnerLast5Win1: DrawWinner = {
+  draw_winner_id: '880e8400-e29b-41d4-a716-446655440011',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  draw_id: mockDraw.draw_id,
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440011', // mockEntryLast5Win1
+  consumer_user_id: 'user-other-002',
+  owner_id: 'user-other-002',
+  owner_type: 'user',
+  entry_number: '2222267890',
   digits_matched: 5,
   prize_tier: 'last_5',
   prize_iqd: 250000,
+  winning_number_index: 1,
+  winning_number: 1234567890,
+  is_jackpot: false,
   payout_status: 'completed',
-  payout_processed_at: '2024-03-22T10:00:00Z',
+  payout_processed_at: '2024-03-22T11:30:00Z',
   requires_compliance_review: false,
+  cap_exceeded: false,
   created_at: '2024-03-21T20:30:00Z',
-  updated_at: '2024-03-22T10:00:00Z',
+  updated_at: '2024-03-22T11:30:00Z',
 };
 
+// Winner #4: Last-7 match on winning_number_1 (4567890)
+// Weekly cap = 1,000,000 IQD; prize = 2.5M IQD → held due to cap exceeded
+export const mockDrawWinnerLast7Win1: DrawWinner = {
+  draw_winner_id: '880e8400-e29b-41d4-a716-446655440012',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  draw_id: mockDraw.draw_id,
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440012', // mockEntryLast7Win1
+  consumer_user_id: 'user-other-003',
+  owner_id: 'user-other-003',
+  owner_type: 'user',
+  entry_number: '3334567890',
+  digits_matched: 7,
+  prize_tier: 'last_7',
+  prize_iqd: 2500000,
+  winning_number_index: 1,
+  winning_number: 1234567890,
+  is_jackpot: false,
+  payout_status: 'held_cap_exceeded',
+  payout_held_reason: 'Weekly payout cap exceeded (1,000,000 IQD limit)',
+  requires_compliance_review: true,
+  cap_exceeded: true,
+  cap_exceeded_amount_iqd: 1500000, // 2.5M - 1M cap = 1.5M excess
+  created_at: '2024-03-21T20:30:00Z',
+  updated_at: '2024-03-21T21:00:00Z',
+};
+
+// Winner #5: Last-3 match on winning_number_2 (210)
+export const mockDrawWinnerLast3Win2: DrawWinner = {
+  draw_winner_id: '880e8400-e29b-41d4-a716-446655440020',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  draw_id: mockDraw.draw_id,
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440020', // mockEntryLast3Win2
+  consumer_user_id: 'user-other-004',
+  owner_id: 'user-other-004',
+  owner_type: 'user',
+  entry_number: '4444444210',
+  digits_matched: 3,
+  prize_tier: 'last_3',
+  prize_iqd: 25000,
+  winning_number_index: 2,
+  winning_number: 9876543210,
+  is_jackpot: false,
+  payout_status: 'completed',
+  payout_processed_at: '2024-03-22T12:30:00Z',
+  requires_compliance_review: false,
+  cap_exceeded: false,
+  created_at: '2024-03-21T20:30:00Z',
+  updated_at: '2024-03-22T12:30:00Z',
+};
+
+// Winner #6: Last-3 match on winning_number_3 (345)
+// Prize = 25,000 IQD, well under 1M weekly cap → completed normally
+export const mockDrawWinnerLast3Win3: DrawWinner = {
+  draw_winner_id: '880e8400-e29b-41d4-a716-446655440030',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  draw_id: mockDraw.draw_id,
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440030', // mockEntryLast3Win3
+  consumer_user_id: 'user-other-005',
+  owner_id: 'user-other-005',
+  owner_type: 'user',
+  entry_number: '6666666345',
+  digits_matched: 3,
+  prize_tier: 'last_3',
+  prize_iqd: 25000,
+  winning_number_index: 3,
+  winning_number: 5555512345,
+  is_jackpot: false,
+  payout_status: 'completed',
+  payout_processed_at: '2024-03-22T13:00:00Z',
+  requires_compliance_review: false,
+  cap_exceeded: false,
+  created_at: '2024-03-21T20:30:00Z',
+  updated_at: '2024-03-22T13:00:00Z',
+};
+
+// Winner #6b: Last-5 match on winning_number_2 (43210) - CLEAN UNDER-CAP COMPLETED
+// Prize = 250,000 IQD, under 1M weekly cap → completed normally
+// This demonstrates the normal happy path for a mid-tier winner
+export const mockDrawWinnerLast5Completed: DrawWinner = {
+  draw_winner_id: '880e8400-e29b-41d4-a716-446655440025',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  draw_id: mockDraw.draw_id,
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440025',
+  consumer_user_id: 'user-other-007',
+  owner_id: 'user-other-007',
+  owner_type: 'user',
+  entry_number: '8888843210', // Matches winning_number_2 Last-5: 43210
+  digits_matched: 5,
+  prize_tier: 'last_5',
+  prize_iqd: 250000,
+  winning_number_index: 2,
+  winning_number: 9876543210,
+  is_jackpot: false,
+  payout_status: 'completed',
+  payout_processed_at: '2024-03-22T11:45:00Z',
+  requires_compliance_review: false,
+  cap_exceeded: false,
+  created_at: '2024-03-21T20:30:00Z',
+  updated_at: '2024-03-22T11:45:00Z',
+};
+
+// Winner #7a: Multi-winner's FIRST win (Last-7) - gets COMPLETED because under cap
+// User 'user-multi-winner' wins 800K from this entry (under 1M cap → paid)
+// Uses unique entry number '1114567890' which matches winning_number_1 Last-7: 4567890
+export const mockDrawWinnerMultiWinFirst: DrawWinner = {
+  draw_winner_id: '880e8400-e29b-41d4-a716-446655440051',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  draw_id: mockDraw.draw_id,
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440051',
+  consumer_user_id: 'user-multi-winner',
+  owner_id: 'user-multi-winner',
+  owner_type: 'user',
+  entry_number: '1114567890', // Matches winning_number_1 Last-7: 4567890
+  digits_matched: 7,
+  prize_tier: 'last_7',
+  prize_iqd: 800000, // Custom amount for testing (normally 2.5M but using 800K to show cumulative cap scenario)
+  winning_number_index: 1,
+  winning_number: 1234567890,
+  is_jackpot: false,
+  payout_status: 'completed',
+  payout_processed_at: '2024-03-22T10:30:00Z',
+  requires_compliance_review: false,
+  cap_exceeded: false,
+  created_at: '2024-03-21T20:30:00Z',
+  updated_at: '2024-03-22T10:30:00Z',
+};
+
+// Winner #8: Split jackpot winner (another user also matched Last-10 on winning_number_1)
+// Weekly cap = 1,000,000 IQD; prize = 50M IQD → held due to cap exceeded
+export const mockDrawWinnerSplitJackpot: DrawWinner = {
+  draw_winner_id: '880e8400-e29b-41d4-a716-446655440040',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  draw_id: mockDraw.draw_id,
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440040', // mockEntrySplitJackpot
+  consumer_user_id: 'user-other-006',
+  owner_id: 'user-other-006',
+  owner_type: 'user',
+  entry_number: '1234567890',
+  digits_matched: 10,
+  prize_tier: 'last_10',
+  prize_iqd: 50000000, // Split jackpot (100M / 2)
+  winning_number_index: 1,
+  winning_number: 1234567890,
+  is_jackpot: true,
+  jackpot_split_count: 2,
+  original_prize_amount_iqd: 100000000,
+  payout_status: 'held_cap_exceeded',
+  payout_held_reason: 'Weekly payout cap exceeded (1,000,000 IQD limit)',
+  requires_compliance_review: true,
+  cap_exceeded: true,
+  cap_exceeded_amount_iqd: 49000000, // 50M - 1M cap = 49M excess
+  created_at: '2024-03-21T20:30:00Z',
+  updated_at: '2024-03-21T21:00:00Z',
+};
+
+// Winner #8: Multi-win scenario - user already won 800K from another entry in this draw
+// This 250K prize pushes their total to 1,050,000 IQD, exceeding the 1M weekly cap by 50K
+// The first 800K win was paid, but this one is held because cumulative total exceeds cap
+export const mockDrawWinnerMultiWinCapped: DrawWinner = {
+  draw_winner_id: '880e8400-e29b-41d4-a716-446655440050',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  draw_id: mockDraw.draw_id,
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440050', // mockEntryHeldForReview
+  consumer_user_id: 'user-multi-winner',
+  owner_id: 'user-multi-winner',
+  owner_type: 'user',
+  entry_number: '5555543210',
+  digits_matched: 5,
+  prize_tier: 'last_5',
+  prize_iqd: 250000,
+  winning_number_index: 2,
+  winning_number: 9876543210,
+  is_jackpot: false,
+  payout_status: 'held_cap_exceeded',
+  payout_held_reason: 'Weekly payout cap exceeded - cumulative wins (800K + 250K = 1,050K > 1M cap)',
+  requires_compliance_review: true,
+  cap_exceeded: true,
+  cap_exceeded_amount_iqd: 50000, // Only 50K excess because prior wins consumed 800K of the 1M cap
+  created_at: '2024-03-21T20:30:00Z',
+  updated_at: '2024-03-21T21:00:00Z',
+};
+
+// Legacy alias for backward compatibility
+export const mockDrawWinner = mockDrawWinnerUserJackpot;
+// Alias for renamed fixture
+export const mockDrawWinnerHeldForReview = mockDrawWinnerMultiWinCapped;
+
+// Complete list of all draw winners
+export const mockDrawWinnersList: DrawWinner[] = [
+  mockDrawWinnerUserJackpot,     // User's jackpot (winning_number_1, Last-10) - HELD (cap exceeded)
+  mockDrawWinnerLast3Win1,       // winning_number_1, Last-3 - COMPLETED (under cap)
+  mockDrawWinnerLast5Win1,       // winning_number_1, Last-5 - COMPLETED (under cap)
+  mockDrawWinnerLast7Win1,       // winning_number_1, Last-7 - HELD (cap exceeded)
+  mockDrawWinnerLast3Win2,       // winning_number_2, Last-3 - COMPLETED (under cap)
+  mockDrawWinnerLast3Win3,       // winning_number_3, Last-3 - COMPLETED (under cap)
+  mockDrawWinnerLast5Completed,  // winning_number_2, Last-5 - COMPLETED (under cap, clean example)
+  mockDrawWinnerSplitJackpot,    // winning_number_1, Last-10 (split) - HELD (cap exceeded)
+  mockDrawWinnerMultiWinFirst,   // winning_number_1, Last-7 - COMPLETED (first multi-win, 800K under cap)
+  mockDrawWinnerMultiWinCapped,  // winning_number_2, Last-5 - HELD (second multi-win, cumulative cap exceeded)
+];
+
 export const mockDrawWinners: DrawWinnerListResponse = {
-  draw_winners_list: [mockDrawWinner],
-  total_draw_winners: 1,
+  draw_winners_list: mockDrawWinnersList,
+  total_draw_winners: 10,
   page: 1,
   page_size: 20,
 };
@@ -157,6 +449,8 @@ export const mockDrawWinners: DrawWinnerListResponse = {
 // Entry Fixtures
 // ===========================================
 
+// Entry matching winning_number_1 (1234567890) - JACKPOT (Last-10)
+// This entry belongs to the authenticated mock user for "your win" highlighting
 export const mockEntry: FawzEntry = {
   fawz_entry_id: '990e8400-e29b-41d4-a716-446655440001',
   tenant_id: '770e8400-e29b-41d4-a716-446655440001',
@@ -180,43 +474,339 @@ export const mockEntry: FawzEntry = {
   is_valid: true,
   outcome: 'won',
   outcome_draw_id: mockDraw.draw_id,
-  digits_matched: 5,
-  prize_iqd: 250000,
+  digits_matched: 10,
+  prize_iqd: 50000000, // Split jackpot (100M / 2)
   created_at: '2024-03-20T14:30:00Z',
   updated_at: '2024-03-21T20:30:00Z',
 };
 
+// Entry matching winning_number_1 Last-3 (890)
+export const mockEntryLast3Win1: FawzEntry = {
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440010',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  consumer_user_id: 'user-other-001',
+  entry_number: '1111111890',
+  source: 'transaction',
+  draw_week: '2024-W12',
+  trailing_1: 0,
+  trailing_2: 90,
+  trailing_3: 890,
+  trailing_4: 1890,
+  trailing_5: 11890,
+  trailing_6: 111890,
+  trailing_7: 1111890,
+  trailing_8: 11111890,
+  trailing_9: 111111890,
+  trailing_10: 1111111890,
+  transaction_amount_iqd: 25000,
+  transaction_channel: 'pos',
+  multiplier_applied: 1,
+  is_valid: true,
+  outcome: 'won',
+  outcome_draw_id: mockDraw.draw_id,
+  digits_matched: 3,
+  prize_iqd: 25000,
+  created_at: '2024-03-20T10:00:00Z',
+  updated_at: '2024-03-21T20:30:00Z',
+};
+
+// Entry matching winning_number_1 Last-5 (67890)
+export const mockEntryLast5Win1: FawzEntry = {
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440011',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  consumer_user_id: 'user-other-002',
+  entry_number: '2222267890',
+  source: 'challenge',
+  draw_week: '2024-W12',
+  trailing_1: 0,
+  trailing_2: 90,
+  trailing_3: 890,
+  trailing_4: 7890,
+  trailing_5: 67890,
+  trailing_6: 267890,
+  trailing_7: 2267890,
+  trailing_8: 22267890,
+  trailing_9: 222267890,
+  trailing_10: 2222267890,
+  transaction_amount_iqd: 0,
+  transaction_channel: undefined,
+  multiplier_applied: 1,
+  is_valid: true,
+  outcome: 'won',
+  outcome_draw_id: mockDraw.draw_id,
+  digits_matched: 5,
+  prize_iqd: 250000,
+  created_at: '2024-03-19T15:00:00Z',
+  updated_at: '2024-03-21T20:30:00Z',
+};
+
+// Entry matching winning_number_1 Last-7 (4567890)
+export const mockEntryLast7Win1: FawzEntry = {
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440012',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  consumer_user_id: 'user-other-003',
+  entry_number: '3334567890',
+  source: 'transaction',
+  draw_week: '2024-W12',
+  trailing_1: 0,
+  trailing_2: 90,
+  trailing_3: 890,
+  trailing_4: 7890,
+  trailing_5: 67890,
+  trailing_6: 567890,
+  trailing_7: 4567890,
+  trailing_8: 34567890,
+  trailing_9: 334567890,
+  trailing_10: 3334567890,
+  transaction_amount_iqd: 100000,
+  transaction_channel: 'pos',
+  multiplier_applied: 1,
+  is_valid: true,
+  outcome: 'won',
+  outcome_draw_id: mockDraw.draw_id,
+  digits_matched: 7,
+  prize_iqd: 2500000,
+  created_at: '2024-03-18T12:00:00Z',
+  updated_at: '2024-03-21T20:30:00Z',
+};
+
+// Entry matching winning_number_2 Last-3 (210)
+export const mockEntryLast3Win2: FawzEntry = {
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440020',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  consumer_user_id: 'user-other-004',
+  entry_number: '4444444210',
+  source: 'referral',
+  draw_week: '2024-W12',
+  trailing_1: 0,
+  trailing_2: 10,
+  trailing_3: 210,
+  trailing_4: 4210,
+  trailing_5: 44210,
+  trailing_6: 444210,
+  trailing_7: 4444210,
+  trailing_8: 44444210,
+  trailing_9: 444444210,
+  trailing_10: 4444444210,
+  transaction_amount_iqd: 0,
+  transaction_channel: undefined,
+  multiplier_applied: 1,
+  is_valid: true,
+  outcome: 'won',
+  outcome_draw_id: mockDraw.draw_id,
+  digits_matched: 3,
+  prize_iqd: 25000,
+  created_at: '2024-03-17T09:00:00Z',
+  updated_at: '2024-03-21T20:30:00Z',
+};
+
+// Entry matching winning_number_3 Last-3 (345)
+export const mockEntryLast3Win3: FawzEntry = {
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440030',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  consumer_user_id: 'user-other-005',
+  entry_number: '6666666345',
+  source: 'transaction',
+  draw_week: '2024-W12',
+  trailing_1: 5,
+  trailing_2: 45,
+  trailing_3: 345,
+  trailing_4: 6345,
+  trailing_5: 66345,
+  trailing_6: 666345,
+  trailing_7: 6666345,
+  trailing_8: 66666345,
+  trailing_9: 666666345,
+  trailing_10: 6666666345,
+  transaction_amount_iqd: 75000,
+  transaction_channel: 'pos',
+  multiplier_applied: 1,
+  is_valid: true,
+  outcome: 'won',
+  outcome_draw_id: mockDraw.draw_id,
+  digits_matched: 3,
+  prize_iqd: 25000,
+  created_at: '2024-03-16T14:00:00Z',
+  updated_at: '2024-03-21T20:30:00Z',
+};
+
+// Another jackpot winner (split) - matching winning_number_1 Last-10
+export const mockEntrySplitJackpot: FawzEntry = {
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440040',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  consumer_user_id: 'user-other-006',
+  entry_number: '1234567890',
+  source: 'transaction',
+  draw_week: '2024-W12',
+  trailing_1: 0,
+  trailing_2: 90,
+  trailing_3: 890,
+  trailing_4: 7890,
+  trailing_5: 67890,
+  trailing_6: 567890,
+  trailing_7: 4567890,
+  trailing_8: 34567890,
+  trailing_9: 234567890,
+  trailing_10: 1234567890,
+  transaction_amount_iqd: 200000,
+  transaction_channel: 'pos',
+  multiplier_applied: 1,
+  is_valid: true,
+  outcome: 'won',
+  outcome_draw_id: mockDraw.draw_id,
+  digits_matched: 10,
+  prize_iqd: 50000000, // Split jackpot (100M / 2)
+  created_at: '2024-03-15T11:00:00Z',
+  updated_at: '2024-03-21T20:30:00Z',
+};
+
+// Entry for clean under-cap Last-5 winner - matches winning_number_2 Last-5 (43210)
+export const mockEntryLast5Completed: FawzEntry = {
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440025',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  consumer_user_id: 'user-other-007',
+  entry_number: '8888843210',
+  source: 'transaction',
+  draw_week: '2024-W12',
+  trailing_1: 0,
+  trailing_2: 10,
+  trailing_3: 210,
+  trailing_4: 3210,
+  trailing_5: 43210,
+  trailing_6: 843210,
+  trailing_7: 8843210,
+  trailing_8: 88843210,
+  trailing_9: 888843210,
+  trailing_10: 8888843210,
+  transaction_amount_iqd: 100000,
+  transaction_channel: 'pos',
+  multiplier_applied: 1,
+  is_valid: true,
+  outcome: 'won',
+  outcome_draw_id: mockDraw.draw_id,
+  digits_matched: 5,
+  prize_iqd: 250000,
+  created_at: '2024-03-19T16:00:00Z',
+  updated_at: '2024-03-21T20:30:00Z',
+};
+
+// Entry for multi-win first scenario - matches winning_number_1 Last-7 (4567890)
+// User 'user-multi-winner' first winning entry (800K paid)
+export const mockEntryMultiWinFirst: FawzEntry = {
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440051',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  consumer_user_id: 'user-multi-winner',
+  entry_number: '1114567890',
+  source: 'transaction',
+  draw_week: '2024-W12',
+  trailing_1: 0,
+  trailing_2: 90,
+  trailing_3: 890,
+  trailing_4: 7890,
+  trailing_5: 67890,
+  trailing_6: 567890,
+  trailing_7: 4567890,
+  trailing_8: 14567890,
+  trailing_9: 114567890,
+  trailing_10: 1114567890,
+  transaction_amount_iqd: 120000,
+  transaction_channel: 'pos',
+  multiplier_applied: 1,
+  is_valid: true,
+  outcome: 'won',
+  outcome_draw_id: mockDraw.draw_id,
+  digits_matched: 7,
+  prize_iqd: 800000,
+  created_at: '2024-03-18T14:00:00Z',
+  updated_at: '2024-03-21T20:30:00Z',
+};
+
+// Entry for multi-win capped scenario - matches winning_number_2 Last-5
+// User 'user-multi-winner' already won 800K from another entry, this is their second win
+export const mockEntryMultiWinCapped: FawzEntry = {
+  fawz_entry_id: '990e8400-e29b-41d4-a716-446655440050',
+  tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+  consumer_user_id: 'user-multi-winner',
+  entry_number: '5555543210',
+  source: 'transaction',
+  draw_week: '2024-W12',
+  trailing_1: 0,
+  trailing_2: 10,
+  trailing_3: 210,
+  trailing_4: 3210,
+  trailing_5: 43210,
+  trailing_6: 543210,
+  trailing_7: 5543210,
+  trailing_8: 55543210,
+  trailing_9: 555543210,
+  trailing_10: 5555543210,
+  transaction_amount_iqd: 150000,
+  transaction_channel: 'pos',
+  multiplier_applied: 1,
+  is_valid: true,
+  outcome: 'won',
+  outcome_draw_id: mockDraw.draw_id,
+  digits_matched: 5,
+  prize_iqd: 250000,
+  created_at: '2024-03-14T08:00:00Z',
+  updated_at: '2024-03-21T20:30:00Z',
+};
+
+// Alias for backward compatibility
+export const mockEntryHeldForReview = mockEntryMultiWinCapped;
+
 export const mockEntryList: FawzEntryListResponse = {
   fawz_entries_list: [
-    mockEntry,
-    {
-      ...mockEntry,
-      fawz_entry_id: '990e8400-e29b-41d4-a716-446655440002',
-      entry_number: '9876543210',
-      source: 'challenge',
-      outcome: 'lost',
-      digits_matched: undefined,
-      prize_iqd: undefined,
-    },
+    mockEntry, // Jackpot winner (user's own entry)
+    mockEntryLast3Win1,
+    mockEntryLast5Win1,
+    mockEntryLast7Win1,
+    mockEntryLast3Win2,
+    mockEntryLast3Win3,
+    mockEntryLast5Completed, // Clean under-cap winner
+    mockEntrySplitJackpot,
+    mockEntryMultiWinFirst,  // Multi-win first entry (800K paid)
+    mockEntryMultiWinCapped, // Multi-win second entry (250K held, cumulative cap exceeded)
+    // Additional active entries for variety
     {
       ...mockEntry,
       fawz_entry_id: '990e8400-e29b-41d4-a716-446655440003',
+      consumer_user_id: mockUser.id,
       entry_number: '5555555555',
       source: 'referral',
       outcome: 'active',
-      draw_id: undefined,
+      outcome_draw_id: undefined,
       digits_matched: undefined,
       prize_iqd: undefined,
+      trailing_3: 555,
+      trailing_5: 55555,
+      trailing_7: 5555555,
+      trailing_10: 5555555555,
+    },
+    {
+      ...mockEntry,
+      fawz_entry_id: '990e8400-e29b-41d4-a716-446655440004',
+      consumer_user_id: mockUser.id,
+      entry_number: '7777777777',
+      source: 'transaction',
+      outcome: 'active',
+      outcome_draw_id: undefined,
+      digits_matched: undefined,
+      prize_iqd: undefined,
+      trailing_3: 777,
+      trailing_5: 77777,
+      trailing_7: 7777777,
+      trailing_10: 7777777777,
     },
   ],
-  total_fawz_entries: 3,
+  total_fawz_entries: 12,
   page: 1,
   page_size: 20,
 };
 
 export const mockEntrySummary: EntrySummary = {
   total_entries: 45,
-  entries_this_week: 8,
+  entries_this_week: 5,
   entries_this_month: 25,
   entries_by_source: {
     transaction: 30,
@@ -226,10 +816,10 @@ export const mockEntrySummary: EntrySummary = {
     bonus: 0,
     onboarding: 0,
   },
-  active_entries: 12,
-  won_entries: 3,
-  total_prizes_iqd: 750000,
-  current_draw_count: 5,
+  active_entries: 3,
+  won_entries: 1,
+  total_prizes_iqd: 250000,
+  current_draw_count: 3,
   lifetime_count: 45,
   weekly_unique_days: 4,
 };
@@ -264,29 +854,95 @@ export const mockNotificationList: NotificationListResponse = {
     {
       ...mockNotification,
       notification_id: 'aa0e8400-e29b-41d4-a716-446655440002',
-      title: 'entry_earned',
-      title_ar: 'حصلت على رقم جديد',
-      notification_type: 'entry_earned',
-      is_read: true,
-      read_at: '2024-03-20T16:00:00Z',
-      priority: 'normal',
+      title: 'draw_reminder',
+      title_ar: 'السحب يبدأ خلال 10 دقائق!',
+      title_en: 'Draw starts in 10 minutes!',
+      body_ar: 'استعد! السحب الأسبوعي يبدأ قريباً. لديك 5 أرقام مشاركة.',
+      body_en: 'Get ready! Weekly draw starts soon. You have 5 entries.',
+      notification_type: 'draw_reminder',
+      is_read: false,
+      priority: 'high',
+      created_at: '2024-03-21T19:50:00Z',
     },
     {
       ...mockNotification,
       notification_id: 'aa0e8400-e29b-41d4-a716-446655440003',
+      title: 'referral_success',
+      title_ar: 'صديقك انضم إلى فوز!',
+      title_en: 'Your friend joined FAWZ!',
+      body_ar: 'أحمد قبل دعوتك وحصلت على 3 أرقام مجانية!',
+      body_en: 'Ahmed accepted your invite and you earned 3 free entries!',
+      notification_type: 'referral_success',
+      is_read: false,
+      priority: 'normal',
+      deep_link: '/referral',
+      created_at: '2024-03-20T14:30:00Z',
+    },
+    {
+      ...mockNotification,
+      notification_id: 'aa0e8400-e29b-41d4-a716-446655440004',
+      title: 'entry_earned',
+      title_ar: 'حصلت على رقم جديد!',
+      title_en: 'You earned a new entry!',
+      body_ar: 'عملية دفع بقيمة 50,000 دينار منحتك رقم فوز جديد.',
+      body_en: 'A 50,000 IQD transaction earned you a new FAWZ entry.',
+      notification_type: 'entry_earned',
+      is_read: true,
+      read_at: '2024-03-20T16:00:00Z',
+      priority: 'normal',
+      deep_link: '/entries',
+      created_at: '2024-03-20T15:45:00Z',
+    },
+    {
+      ...mockNotification,
+      notification_id: 'aa0e8400-e29b-41d4-a716-446655440005',
       title: 'challenge_completed',
-      title_ar: 'أكملت التحدي',
+      title_ar: 'أكملت التحدي!',
+      title_en: 'Challenge completed!',
+      body_ar: 'أكملت تحدي "ادفع 5 أيام متتالية" وحصلت على 10 أرقام إضافية!',
+      body_en: 'You completed "Pay 5 consecutive days" and earned 10 bonus entries!',
       notification_type: 'challenge_completed',
       is_read: false,
       priority: 'normal',
+      deep_link: '/challenges',
+      created_at: '2024-03-19T18:00:00Z',
+    },
+    {
+      ...mockNotification,
+      notification_id: 'aa0e8400-e29b-41d4-a716-446655440006',
+      title: 'matching_tickets',
+      title_ar: 'لديك أرقام متطابقة!',
+      title_en: 'You have matching numbers!',
+      body_ar: 'تهانينا! رقمك ينتهي بـ 567 ويتطابق مع السحب الأسبوعي!',
+      body_en: 'Congratulations! Your entry ending in 567 matches the weekly draw!',
+      notification_type: 'draw_result_winner',
+      is_read: false,
+      priority: 'high',
+      deep_link: '/prizes',
+      created_at: '2024-03-18T20:35:00Z',
+    },
+    {
+      ...mockNotification,
+      notification_id: 'aa0e8400-e29b-41d4-a716-446655440007',
+      title: 'challenge_progress',
+      title_ar: 'لا تفوت التحدي!',
+      title_en: "Don't miss the challenge!",
+      body_ar: 'باقي يوم واحد لإكمال تحدي "ادفع 3 مرات هذا الأسبوع".',
+      body_en: '1 day left to complete "Pay 3 times this week" challenge.',
+      notification_type: 'challenge_progress',
+      is_read: true,
+      read_at: '2024-03-17T10:00:00Z',
+      priority: 'normal',
+      deep_link: '/challenges',
+      created_at: '2024-03-17T09:00:00Z',
     },
   ],
-  total_notifications: 3,
+  total_notifications: 7,
   page: 1,
   page_size: 20,
 };
 
-export const mockUnreadCount = { count: 2 };
+export const mockUnreadCount = { count: 5 };
 
 export const mockNotificationPreference: NotificationPreference = {
   notification_preference_id: 'bb0e8400-e29b-41d4-a716-446655440001',
@@ -653,3 +1309,13 @@ export const mockConsumerUserList = {
   page: 1,
   page_size: 20,
 };
+
+// ===========================================
+// Wallet Mock Values (placeholder until wallet service exists)
+// ===========================================
+
+/** Mock user wallet balance in IQD */
+export const mockWalletBalance = 250000;
+
+/** Mock monthly spending in IQD */
+export const mockMonthlySpend = 1500000;

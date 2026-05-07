@@ -29,6 +29,16 @@ export const PayoutStatusEnum = z.enum([
   'failed',
   'on_hold',
   'requires_review',
+  // Additional statuses from API
+  'created',
+  'credited',
+  'paid',
+  'pending_payout',
+  'staged',
+  'rejected',
+  'held_for_review',
+  'held_cap_exceeded',
+  'held_compliance_review',
 ]);
 export type PayoutStatus = z.infer<typeof PayoutStatusEnum>;
 
@@ -107,16 +117,31 @@ export interface DrawWinner {
   fawz_entry_id: string;
   consumer_user_id?: string;
   merchant_id?: string;
+  owner_id?: string;
+  owner_type?: 'user' | 'merchant';
   entry_number: string;
   digits_matched: number;
   prize_tier: string;
   prize_iqd: number;
+  // Which winning number (1, 2, or 3) this entry matched
+  winning_number_index: number;
+  winning_number?: number;
+  // Jackpot fields
+  is_jackpot?: boolean;
+  jackpot_split_count?: number;
+  original_prize_amount_iqd?: number;
+  // Payout status and compliance
   payout_status: PayoutStatus;
   payout_processed_at?: string;
   payout_reference?: string;
+  payout_held_reason?: string;
   requires_compliance_review: boolean;
   compliance_reviewed_at?: string;
   compliance_reviewed_by?: string;
+  // Cap exceeded fields
+  cap_exceeded?: boolean;
+  cap_exceeded_amount_iqd?: number;
+  // Timestamps
   created_at: string;
   updated_at: string;
 }

@@ -9,7 +9,8 @@ import {
   mockAuthTokens,
   mockDrawList,
   mockDraw,
-  mockDrawWinners,
+  mockDrawWinnersList,
+  mockDrawWinnerUserJackpot,
   mockEntryList,
   mockEntrySummary,
   mockNotificationList,
@@ -127,11 +128,77 @@ const userManagementHandlers = [
 // Draw Management Handlers
 // ===========================================
 
+// Helper: compute next Thursday 9 PM (draw time)
+function getNextThursdayDrawDate(): string {
+  const now = new Date();
+  const daysUntilThursday = (4 - now.getDay() + 7) % 7 || 7;
+  const nextThursday = new Date(now);
+  nextThursday.setDate(now.getDate() + daysUntilThursday);
+  nextThursday.setHours(21, 0, 0, 0);
+  return nextThursday.toISOString();
+}
+
+function getNextThursdayDrawDateShort(): string {
+  const now = new Date();
+  const daysUntilThursday = (4 - now.getDay() + 7) % 7 || 7;
+  const nextThursday = new Date(now);
+  nextThursday.setDate(now.getDate() + daysUntilThursday);
+  return nextThursday.toISOString().split('T')[0];
+}
+
 const drawManagementHandlers = [
   // List draws (plural - matches draw.service.ts)
-  http.get(`${API_BASE}/fawz_draw_management/draws`, async () => {
+  http.get(`${API_BASE}/fawz_draw_management/draws`, async ({ request }) => {
     await delay(100);
-    return HttpResponse.json(mockDrawList);
+    const url = new URL(request.url);
+    const status = url.searchParams.get('status');
+
+    // Compute dynamic draw date for scheduled draws
+    const nextDrawDate = getNextThursdayDrawDate();
+    const nextDrawDateShort = getNextThursdayDrawDateShort();
+
+    // Create dynamic scheduled draw
+    const scheduledDraw = {
+      ...mockDraw,
+      draw_id: '660e8400-e29b-41d4-a716-446655440099',
+      draw_number: 44,
+      draw_date: nextDrawDateShort,
+      status: 'scheduled',
+      entry_cutoff_at: nextDrawDate,
+      scheduled_broadcast_at: nextDrawDate,
+      finalized_at: undefined,
+      winning_numbers: undefined,
+      winning_number_1: undefined,
+      winning_number_2: undefined,
+      winning_number_3: undefined,
+    };
+
+    // If querying for scheduled draws, return the dynamic scheduled draw
+    if (status === 'scheduled') {
+      return HttpResponse.json({
+        draws_list: [scheduledDraw],
+        total_draws: 1,
+        page: 1,
+        page_size: 20,
+      });
+    }
+
+    // Get draw_type filter
+    const drawType = url.searchParams.get('draw_type');
+
+    // Build the full list with the scheduled draw
+    let draws = [...mockDrawList.draws_list, scheduledDraw];
+
+    // Filter by draw_type if specified
+    if (drawType && drawType !== 'all') {
+      draws = draws.filter((draw) => draw.draw_type === drawType);
+    }
+
+    return HttpResponse.json({
+      ...mockDrawList,
+      draws_list: draws,
+      total_draws: draws.length,
+    });
   }),
 
   // Get draw by ID (plural)
@@ -141,15 +208,57 @@ const drawManagementHandlers = [
   }),
 
   // Get draw winners (plural - matches draw.service.ts)
-  http.get(`${API_BASE}/fawz_draw_management/draw_winners`, async () => {
+  // Supports filtering by draw_id, consumer_user_id, payout_status, winning_number_index
+  http.get(`${API_BASE}/fawz_draw_management/draw_winners`, async ({ request }) => {
     await delay(100);
-    return HttpResponse.json(mockDrawWinners);
+    const url = new URL(request.url);
+    const drawId = url.searchParams.get('draw_id');
+    const consumerId = url.searchParams.get('consumer_user_id');
+    const payoutStatus = url.searchParams.get('payout_status');
+    const winningNumberIndex = url.searchParams.get('winning_number_index');
+
+    let winners = [...mockDrawWinnersList];
+
+    // Filter by draw_id if specified
+    if (drawId) {
+      winners = winners.filter((w) => w.draw_id === drawId);
+    }
+
+    // Filter by consumer_user_id if specified
+    if (consumerId) {
+      winners = winners.filter((w) => w.consumer_user_id === consumerId);
+    }
+
+    // Filter by payout_status if specified
+    if (payoutStatus) {
+      winners = winners.filter((w) => w.payout_status === payoutStatus);
+    }
+
+    // Filter by winning_number_index if specified
+    if (winningNumberIndex) {
+      winners = winners.filter(
+        (w) => w.winning_number_index === parseInt(winningNumberIndex, 10),
+      );
+    }
+
+    return HttpResponse.json({
+      draw_winners_list: winners,
+      total_draw_winners: winners.length,
+      page: 1,
+      page_size: 20,
+    });
   }),
 
   // Get draw winner by ID
-  http.get(`${API_BASE}/fawz_draw_management/draw_winners/:winner_id`, async () => {
+  http.get(`${API_BASE}/fawz_draw_management/draw_winners/:winner_id`, async ({ params }) => {
     await delay(100);
-    return HttpResponse.json(mockDrawWinners.draw_winners_list[0]);
+    const { winner_id } = params;
+    const winner = mockDrawWinnersList.find((w) => w.draw_winner_id === winner_id);
+    if (winner) {
+      return HttpResponse.json(winner);
+    }
+    // Default to user's jackpot winner if not found
+    return HttpResponse.json(mockDrawWinnerUserJackpot);
   }),
 
   // Get draw digit events
@@ -192,9 +301,22 @@ const drawManagementHandlers = [
 
 const entryGenerationHandlers = [
   // List entries (plural - matches entries.service.ts)
-  http.get(`${API_BASE}/fawz_entry_generation/fawz_entries`, async () => {
+  http.get(`${API_BASE}/fawz_entry_generation/fawz_entries`, async ({ request }) => {
     await delay(100);
-    return HttpResponse.json(mockEntryList);
+    const url = new URL(request.url);
+    const source = url.searchParams.get('source');
+
+    // Filter by source if specified
+    let entries = [...mockEntryList.fawz_entries_list];
+    if (source && source !== 'all') {
+      entries = entries.filter((entry) => entry.source === source);
+    }
+
+    return HttpResponse.json({
+      ...mockEntryList,
+      fawz_entries_list: entries,
+      total_fawz_entries: entries.length,
+    });
   }),
 
   // Get entry summary
