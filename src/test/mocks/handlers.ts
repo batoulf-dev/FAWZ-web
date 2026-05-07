@@ -30,6 +30,7 @@ import {
   sessionNextDraw,
   sessionPastDraws,
   sessionWonEntries,
+  sessionDrawWinners,
   sessionPrizePayouts,
   getNextDrawTime,
 } from '../fixtures';
@@ -284,7 +285,8 @@ const drawManagementHandlers = [
     const payoutStatus = url.searchParams.get('payout_status');
     const winningNumberIndex = url.searchParams.get('winning_number_index');
 
-    let winners = [...mockDrawWinnersList];
+    // DEV ONLY: Combine session draw winners with static mock winners
+    let winners = [...sessionDrawWinners, ...mockDrawWinnersList];
 
     // Filter by draw_id if specified
     if (drawId) {
@@ -375,6 +377,7 @@ const entryGenerationHandlers = [
     const source = url.searchParams.get('source');
     const outcome = url.searchParams.get('outcome');
     const consumerId = url.searchParams.get('consumer_user_id');
+    const drawId = url.searchParams.get('draw_id');
 
     // DEV ONLY: Combine session active entries + won entries
     const allSessionEntries = [...sessionActiveEntries, ...sessionWonEntries];
@@ -384,6 +387,13 @@ const entryGenerationHandlers = [
     let entries = allSessionEntries.filter(
       (entry) => entry.consumer_user_id === userId,
     );
+
+    // Filter by draw_id if specified - match entries for this specific draw
+    if (drawId && drawId !== 'undefined' && drawId !== '') {
+      entries = entries.filter(
+        (entry) => entry.draw_id === drawId || entry.outcome_draw_id === drawId,
+      );
+    }
 
     // Filter by outcome if specified (ignore 'all', 'undefined', or empty string)
     if (outcome && outcome !== 'all' && outcome !== 'undefined' && outcome !== '') {

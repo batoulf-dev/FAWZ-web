@@ -448,6 +448,59 @@ function generateWonEntries(): FawzEntry[] {
 export const sessionWonEntries: FawzEntry[] = generateWonEntries();
 
 // ===========================================
+// DEV ONLY - Session Draw Winners (from won entries)
+// ===========================================
+
+/** DEV ONLY: Get prize tier from digits matched (local helper) */
+function getPrizeTierForWinners(digits: number): 'last_3' | 'last_5' | 'last_7' | 'last_10' {
+  if (digits >= 10) return 'last_10';
+  if (digits >= 7) return 'last_7';
+  if (digits >= 5) return 'last_5';
+  return 'last_3';
+}
+
+/** DEV ONLY: Generate draw winners from session won entries */
+function generateSessionDrawWinners(): DrawWinner[] {
+  const winners: DrawWinner[] = [];
+
+  for (const entry of sessionWonEntries) {
+    if (!entry.outcome_draw_id) continue;
+
+    const draw = sessionPastDraws.find((d) => d.draw_id === entry.outcome_draw_id);
+    if (!draw) continue;
+
+    const prizeTier = getPrizeTierForWinners(entry.digits_matched || 3);
+
+    winners.push({
+      draw_winner_id: `session-winner-${entry.fawz_entry_id}`,
+      tenant_id: '770e8400-e29b-41d4-a716-446655440001',
+      draw_id: entry.outcome_draw_id,
+      fawz_entry_id: entry.fawz_entry_id,
+      consumer_user_id: entry.consumer_user_id,
+      owner_id: entry.consumer_user_id,
+      owner_type: 'user',
+      entry_number: entry.entry_number,
+      digits_matched: entry.digits_matched || 3,
+      prize_tier: prizeTier,
+      prize_iqd: entry.prize_iqd || 0,
+      winning_number_index: 1,
+      winning_number: parseInt(draw.winning_number_1?.toString() || '0', 10),
+      is_jackpot: (entry.digits_matched || 0) >= 10,
+      payout_status: 'completed',
+      requires_compliance_review: (entry.digits_matched || 0) >= 7,
+      cap_exceeded: false,
+      created_at: draw.finalized_at || new Date().toISOString(),
+      updated_at: draw.finalized_at || new Date().toISOString(),
+    });
+  }
+
+  return winners;
+}
+
+/** DEV ONLY: Session-based draw winners */
+export const sessionDrawWinners: DrawWinner[] = generateSessionDrawWinners();
+
+// ===========================================
 // DEV ONLY - Session Prize Payouts with Cap Logic
 // ===========================================
 

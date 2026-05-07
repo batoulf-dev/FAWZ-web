@@ -272,8 +272,8 @@ export default function DrawDetailPage(): React.ReactElement {
   // Winners data is fetched but displayed via userMatches
   useDrawWinners(drawId ?? '', !!drawId);
 
-  // Fetch user's entries for ticket comparison
-  const { data: entriesData } = useEntryList({ page_size: 50 });
+  // Fetch user's entries for this specific draw
+  const { data: entriesData } = useEntryList({ draw_id: drawId, page_size: 50 });
 
   // Build winning numbers from the draw data
   const winningNumbers = useMemo(() => {
